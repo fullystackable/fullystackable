@@ -4,6 +4,7 @@ import { AssetList } from "@/components/AssetList";
 import { ContactList } from "@/components/ContactList";
 import { TaskList } from "@/components/TaskList";
 import { UpcomingList } from "@/components/UpcomingList";
+import { formatShortDate } from "@/lib/date";
 
 type BrandWorkspaceProps = {
   brand: Brand;
@@ -81,10 +82,13 @@ export function BrandWorkspace({ brand }: BrandWorkspaceProps) {
           <div className="mt-5 space-y-3">
             {brand.notes.map((note) => (
               <article
-                key={note}
-                className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-6 text-slate-600"
+                key={note.id}
+                className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
               >
-                {note}
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  Added {formatShortDate(note.createdAt)}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{note.text}</p>
               </article>
             ))}
           </div>

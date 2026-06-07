@@ -1,4 +1,5 @@
 import type { Task } from "@/data/mockData";
+import { formatWeekdayDate } from "@/lib/date";
 
 type TaskListProps = {
   tasks: Task[];
@@ -29,7 +30,7 @@ export function TaskList({ tasks }: TaskListProps) {
             <div>
               <h3 className="text-base font-semibold text-slate-950">{task.title}</h3>
               <p className="mt-1 text-sm text-slate-600">
-                {task.assignee} • Due {task.dueDate}
+                {task.assignee} | Due {formatWeekdayDate(task.dueDate)}
               </p>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${priorityStyles[task.priority]}`}>

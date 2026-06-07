@@ -1,4 +1,5 @@
 import type { UpcomingItem } from "@/data/mockData";
+import { formatWeekdayDate } from "@/lib/date";
 
 type UpcomingListProps = {
   items: UpcomingItem[];
@@ -17,8 +18,8 @@ export function UpcomingList({ items, showBrand = false }: UpcomingListProps) {
             <div>
               <h3 className="text-base font-semibold text-slate-950">{item.title}</h3>
               <p className="mt-1 text-sm text-slate-600">
-                {item.date} • {item.type}
-                {showBrand && item.brandName ? ` • ${item.brandName}` : ""}
+                {formatWeekdayDate(item.date)} | {item.type}
+                {showBrand && item.brandName ? ` | ${item.brandName}` : ""}
               </p>
             </div>
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200">

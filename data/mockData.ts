@@ -1,3 +1,5 @@
+import { addDays, startOfDay, toISODate } from "@/lib/date";
+
 export type Task = {
   id: string;
   title: string;
@@ -32,6 +34,12 @@ export type UpcomingItem = {
   brandName?: string;
 };
 
+export type Note = {
+  id: string;
+  text: string;
+  createdAt: string;
+};
+
 export type Brand = {
   id: string;
   name: string;
@@ -42,8 +50,14 @@ export type Brand = {
   assets: Asset[];
   contacts: Contact[];
   upcoming: UpcomingItem[];
-  notes: string[];
+  notes: Note[];
 };
+
+const mockBaseDate = startOfDay(new Date());
+
+function mockDate(offset: number) {
+  return toISODate(addDays(mockBaseDate, offset));
+}
 
 export const mockBrands: Brand[] = [
   {
@@ -59,23 +73,23 @@ export const mockBrands: Brand[] = [
         title: "Finalize Q3 webinar landing page copy",
         status: "In progress",
         assignee: "Maya",
-        dueDate: "Jun 10",
+        dueDate: mockDate(1),
         priority: "High",
       },
       {
         id: "fs-task-2",
-        title: "Review new slide template pack",
+        title: "Review speaker slide template pack",
         status: "Needs review",
         assignee: "Jordan",
-        dueDate: "Jun 11",
+        dueDate: mockDate(2),
         priority: "Medium",
       },
       {
         id: "fs-task-3",
-        title: "Plan founder LinkedIn carousel series",
+        title: "Plan founder LinkedIn carousel run",
         status: "Planned",
         assignee: "Chris",
-        dueDate: "Jun 14",
+        dueDate: mockDate(6),
         priority: "Low",
       },
     ],
@@ -85,14 +99,14 @@ export const mockBrands: Brand[] = [
         name: "Pitch deck v12",
         type: "Google Slides",
         url: "https://example.com/fun-slides/pitch-deck",
-        updatedAt: "Jun 6",
+        updatedAt: mockDate(-1),
       },
       {
         id: "fs-asset-2",
         name: "Webinar brief",
         type: "Notion doc",
         url: "https://example.com/fun-slides/webinar-brief",
-        updatedAt: "Jun 5",
+        updatedAt: mockDate(-2),
       },
     ],
     contacts: [
@@ -115,21 +129,29 @@ export const mockBrands: Brand[] = [
       {
         id: "fs-upcoming-1",
         title: "Webinar creative review",
-        date: "Jun 11",
+        date: mockDate(2),
         type: "Review",
         owner: "Jordan",
       },
       {
         id: "fs-upcoming-2",
         title: "Sales deck handoff",
-        date: "Jun 14",
+        date: mockDate(6),
         type: "Delivery",
         owner: "Maya",
       },
     ],
     notes: [
-      "Founder wants stronger before-and-after proof points in all presentation narratives.",
-      "Short-form content should ladder back to the webinar registration push through mid-June.",
+      {
+        id: "fs-note-1",
+        text: "Founder wants stronger before-and-after proof points in all presentation narratives.",
+        createdAt: mockDate(0),
+      },
+      {
+        id: "fs-note-2",
+        text: "Short-form content should keep feeding webinar registration through next Friday.",
+        createdAt: mockDate(-2),
+      },
     ],
   },
   {
@@ -145,7 +167,7 @@ export const mockBrands: Brand[] = [
         title: "Approve summer escape offer stack",
         status: "Needs review",
         assignee: "Taylor",
-        dueDate: "Jun 9",
+        dueDate: mockDate(0),
         priority: "High",
       },
       {
@@ -153,7 +175,7 @@ export const mockBrands: Brand[] = [
         title: "Refresh hero imagery for Bahamas package",
         status: "In progress",
         assignee: "Imani",
-        dueDate: "Jun 12",
+        dueDate: mockDate(4),
         priority: "Medium",
       },
       {
@@ -161,7 +183,7 @@ export const mockBrands: Brand[] = [
         title: "Build retargeting audience brief",
         status: "Planned",
         assignee: "Devon",
-        dueDate: "Jun 15",
+        dueDate: mockDate(7),
         priority: "Medium",
       },
     ],
@@ -171,14 +193,14 @@ export const mockBrands: Brand[] = [
         name: "Summer launch checklist",
         type: "Airtable",
         url: "https://example.com/swack-vacations/launch-checklist",
-        updatedAt: "Jun 7",
+        updatedAt: mockDate(0),
       },
       {
         id: "sv-asset-2",
         name: "Bahamas social kit",
         type: "Figma",
         url: "https://example.com/swack-vacations/social-kit",
-        updatedAt: "Jun 4",
+        updatedAt: mockDate(-3),
       },
     ],
     contacts: [
@@ -200,22 +222,30 @@ export const mockBrands: Brand[] = [
     upcoming: [
       {
         id: "sv-upcoming-1",
-        title: "Summer escape launch",
-        date: "Jun 13",
-        type: "Launch",
-        owner: "Taylor",
-      },
-      {
-        id: "sv-upcoming-2",
         title: "Partner hotel call",
-        date: "Jun 10",
+        date: mockDate(1),
         type: "Meeting",
         owner: "Elle",
       },
+      {
+        id: "sv-upcoming-2",
+        title: "Summer escape launch",
+        date: mockDate(6),
+        type: "Launch",
+        owner: "Taylor",
+      },
     ],
     notes: [
-      "Launch messaging should lead with value stacking rather than destination romance for better conversion.",
-      "Paid media budget can flex upward if the first three days outperform the Memorial Day benchmark.",
+      {
+        id: "sv-note-1",
+        text: "Launch messaging should lead with value stacking rather than destination romance.",
+        createdAt: mockDate(-1),
+      },
+      {
+        id: "sv-note-2",
+        text: "Paid media budget can flex upward if the first three launch days beat Memorial Day benchmarks.",
+        createdAt: mockDate(-4),
+      },
     ],
   },
   {
@@ -231,7 +261,7 @@ export const mockBrands: Brand[] = [
         title: "Fix tracking gaps on quote form submissions",
         status: "In progress",
         assignee: "Logan",
-        dueDate: "Jun 9",
+        dueDate: mockDate(0),
         priority: "High",
       },
       {
@@ -239,7 +269,7 @@ export const mockBrands: Brand[] = [
         title: "Draft Dallas location page revisions",
         status: "Needs review",
         assignee: "Jamie",
-        dueDate: "Jun 12",
+        dueDate: mockDate(3),
         priority: "High",
       },
       {
@@ -247,7 +277,7 @@ export const mockBrands: Brand[] = [
         title: "Collect before-and-after project photos",
         status: "Planned",
         assignee: "Sky",
-        dueDate: "Jun 16",
+        dueDate: mockDate(8),
         priority: "Low",
       },
     ],
@@ -257,14 +287,14 @@ export const mockBrands: Brand[] = [
         name: "Local SEO brief",
         type: "Google Doc",
         url: "https://example.com/hammer-and-nails/seo-brief",
-        updatedAt: "Jun 6",
+        updatedAt: mockDate(-1),
       },
       {
         id: "hn-asset-2",
         name: "Service area map",
         type: "PDF",
         url: "https://example.com/hammer-and-nails/service-map",
-        updatedAt: "Jun 3",
+        updatedAt: mockDate(-4),
       },
     ],
     contacts: [
@@ -287,21 +317,29 @@ export const mockBrands: Brand[] = [
       {
         id: "hn-upcoming-1",
         title: "Analytics cleanup checkpoint",
-        date: "Jun 9",
+        date: mockDate(0),
         type: "Deadline",
         owner: "Logan",
       },
       {
         id: "hn-upcoming-2",
         title: "Dallas page review",
-        date: "Jun 12",
+        date: mockDate(4),
         type: "Review",
         owner: "Jamie",
       },
     ],
     notes: [
-      "Lead quality is solid, but attribution is under-reporting PPC wins and hiding ROI.",
-      "Location page revisions should feature financing and booking speed above the fold.",
+      {
+        id: "hn-note-1",
+        text: "Attribution is under-reporting PPC wins and hiding location-level ROI.",
+        createdAt: mockDate(0),
+      },
+      {
+        id: "hn-note-2",
+        text: "Dallas page revisions should feature financing and booking speed above the fold.",
+        createdAt: mockDate(-3),
+      },
     ],
   },
   {
@@ -317,7 +355,7 @@ export const mockBrands: Brand[] = [
         title: "Publish kitchen budget calculator article",
         status: "In progress",
         assignee: "Parker",
-        dueDate: "Jun 10",
+        dueDate: mockDate(1),
         priority: "Medium",
       },
       {
@@ -325,7 +363,7 @@ export const mockBrands: Brand[] = [
         title: "QA lead magnet download flow",
         status: "Done",
         assignee: "Noah",
-        dueDate: "Jun 7",
+        dueDate: mockDate(-1),
         priority: "Low",
       },
       {
@@ -333,7 +371,7 @@ export const mockBrands: Brand[] = [
         title: "Outline bathroom guide email sequence",
         status: "Planned",
         assignee: "Parker",
-        dueDate: "Jun 17",
+        dueDate: mockDate(9),
         priority: "Medium",
       },
     ],
@@ -343,14 +381,14 @@ export const mockBrands: Brand[] = [
         name: "2026 content calendar",
         type: "Notion doc",
         url: "https://example.com/renovation-navigator/content-calendar",
-        updatedAt: "Jun 5",
+        updatedAt: mockDate(-2),
       },
       {
         id: "rn-asset-2",
         name: "Budget calculator wireframe",
         type: "Figma",
         url: "https://example.com/renovation-navigator/wireframe",
-        updatedAt: "Jun 2",
+        updatedAt: mockDate(-5),
       },
     ],
     contacts: [
@@ -373,21 +411,29 @@ export const mockBrands: Brand[] = [
       {
         id: "rn-upcoming-1",
         title: "Calculator article publish",
-        date: "Jun 10",
+        date: mockDate(1),
         type: "Publish",
         owner: "Parker",
       },
       {
         id: "rn-upcoming-2",
         title: "Lead magnet results review",
-        date: "Jun 18",
+        date: mockDate(8),
         type: "Meeting",
         owner: "Lena",
       },
     ],
     notes: [
-      "Evergreen educational content is steadily improving organic lead flow and lower-funnel conversion.",
-      "Next content sprint should repurpose calculator insights into short-form social proof snippets.",
+      {
+        id: "rn-note-1",
+        text: "Calculator insights should be repackaged into short-form proof content next sprint.",
+        createdAt: mockDate(-1),
+      },
+      {
+        id: "rn-note-2",
+        text: "Evergreen educational content is still the best lower-funnel conversion assist for this brand.",
+        createdAt: mockDate(-5),
+      },
     ],
   },
   {
@@ -403,7 +449,7 @@ export const mockBrands: Brand[] = [
         title: "Refresh emergency CTA messaging",
         status: "Needs review",
         assignee: "Harper",
-        dueDate: "Jun 8",
+        dueDate: mockDate(-1),
         priority: "High",
       },
       {
@@ -411,7 +457,7 @@ export const mockBrands: Brand[] = [
         title: "Audit GBP review response cadence",
         status: "In progress",
         assignee: "Kai",
-        dueDate: "Jun 11",
+        dueDate: mockDate(2),
         priority: "Medium",
       },
       {
@@ -419,7 +465,7 @@ export const mockBrands: Brand[] = [
         title: "Draft insurance FAQ landing page",
         status: "Planned",
         assignee: "Ari",
-        dueDate: "Jun 15",
+        dueDate: mockDate(6),
         priority: "Medium",
       },
     ],
@@ -429,14 +475,14 @@ export const mockBrands: Brand[] = [
         name: "Emergency messaging matrix",
         type: "Google Sheet",
         url: "https://example.com/mold-medics/messaging-matrix",
-        updatedAt: "Jun 7",
+        updatedAt: mockDate(0),
       },
       {
         id: "mm-asset-2",
         name: "Insurance FAQ draft",
         type: "Google Doc",
         url: "https://example.com/mold-medics/insurance-faq",
-        updatedAt: "Jun 5",
+        updatedAt: mockDate(-2),
       },
     ],
     contacts: [
@@ -459,21 +505,29 @@ export const mockBrands: Brand[] = [
       {
         id: "mm-upcoming-1",
         title: "CTA messaging sign-off",
-        date: "Jun 8",
+        date: mockDate(0),
         type: "Approval",
         owner: "Harper",
       },
       {
         id: "mm-upcoming-2",
         title: "Local trust signal review",
-        date: "Jun 12",
+        date: mockDate(5),
         type: "Review",
         owner: "Kai",
       },
     ],
     notes: [
-      "Urgency messaging needs to reassure without sounding alarmist; trust and clarity should lead.",
-      "Insurance-related search intent is growing and deserves a dedicated conversion path.",
+      {
+        id: "mm-note-1",
+        text: "Urgency messaging needs to reassure without sounding alarmist.",
+        createdAt: mockDate(-1),
+      },
+      {
+        id: "mm-note-2",
+        text: "Insurance-related search intent is growing and deserves a dedicated conversion path.",
+        createdAt: mockDate(-4),
+      },
     ],
   },
   {
@@ -489,7 +543,7 @@ export const mockBrands: Brand[] = [
         title: "Approve device launch promo grid",
         status: "Needs review",
         assignee: "Morgan",
-        dueDate: "Jun 9",
+        dueDate: mockDate(1),
         priority: "High",
       },
       {
@@ -497,7 +551,7 @@ export const mockBrands: Brand[] = [
         title: "Update store locator campaign copy",
         status: "In progress",
         assignee: "Reese",
-        dueDate: "Jun 13",
+        dueDate: mockDate(5),
         priority: "Medium",
       },
       {
@@ -505,7 +559,7 @@ export const mockBrands: Brand[] = [
         title: "Prep co-op reporting recap",
         status: "Planned",
         assignee: "Blair",
-        dueDate: "Jun 18",
+        dueDate: mockDate(10),
         priority: "Low",
       },
     ],
@@ -515,14 +569,14 @@ export const mockBrands: Brand[] = [
         name: "Launch promo matrix",
         type: "Google Sheet",
         url: "https://example.com/verizon-wireless-zone/promo-matrix",
-        updatedAt: "Jun 6",
+        updatedAt: mockDate(-1),
       },
       {
         id: "vz-asset-2",
         name: "Retail signage set",
         type: "Dropbox folder",
         url: "https://example.com/verizon-wireless-zone/signage",
-        updatedAt: "Jun 4",
+        updatedAt: mockDate(-3),
       },
     ],
     contacts: [
@@ -544,22 +598,30 @@ export const mockBrands: Brand[] = [
     upcoming: [
       {
         id: "vz-upcoming-1",
-        title: "Device launch kickoff",
-        date: "Jun 13",
-        type: "Launch",
-        owner: "Morgan",
-      },
-      {
-        id: "vz-upcoming-2",
         title: "Store update sync",
-        date: "Jun 11",
+        date: mockDate(2),
         type: "Meeting",
         owner: "Reese",
       },
+      {
+        id: "vz-upcoming-2",
+        title: "Device launch kickoff",
+        date: mockDate(6),
+        type: "Launch",
+        owner: "Morgan",
+      },
     ],
     notes: [
-      "Retail and digital messaging need tighter alignment so in-store staff can reinforce active promos.",
-      "Launch week reporting should separate branded search lift from store locator engagement.",
+      {
+        id: "vz-note-1",
+        text: "Retail and digital messaging need tighter alignment before launch week.",
+        createdAt: mockDate(0),
+      },
+      {
+        id: "vz-note-2",
+        text: "Launch reporting should separate branded search lift from store locator engagement.",
+        createdAt: mockDate(-3),
+      },
     ],
   },
 ];

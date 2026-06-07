@@ -1,4 +1,5 @@
 import type { Asset } from "@/data/mockData";
+import { formatShortDate } from "@/lib/date";
 
 type AssetListProps = {
   assets: Asset[];
@@ -16,7 +17,7 @@ export function AssetList({ assets }: AssetListProps) {
             <div>
               <h3 className="text-base font-semibold text-slate-950">{asset.name}</h3>
               <p className="mt-1 text-sm text-slate-600">
-                {asset.type} • Updated {asset.updatedAt}
+                {asset.type} | Updated {formatShortDate(asset.updatedAt)}
               </p>
             </div>
             <a
