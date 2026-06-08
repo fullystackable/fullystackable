@@ -7,10 +7,68 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { Badge } from "@/components/ui";
 import { getBrandWorkspaceBySlug } from "@/lib/brand-workspaces";
 import { brandStatusTones } from "@/lib/design";
+import type { WorkspaceDensity } from "@/lib/workspace-view";
+
+type TaskSortOption = "due_asc" | "priority_desc" | "status" | "title";
+type AssetSortOption = "updated_desc" | "priority_desc" | "type" | "title";
+type UpcomingSortOption = "date_asc" | "type" | "status" | "title";
 
 type BrandPageProps = {
   params: Promise<{ brandId: string }>;
+  searchParams: Promise<{
+    campaign?: string;
+    taskSort?: string;
+    assetSort?: string;
+    upcomingSort?: string;
+    density?: string;
+  }>;
 };
+
+function normalizeTaskSort(value: string | undefined): TaskSortOption {
+  switch (value) {
+    case "priority_desc":
+    case "status":
+    case "title":
+      return value;
+    case "due_asc":
+    default:
+      return "due_asc";
+  }
+}
+
+function normalizeAssetSort(value: string | undefined): AssetSortOption {
+  switch (value) {
+    case "priority_desc":
+    case "type":
+    case "title":
+      return value;
+    case "updated_desc":
+    default:
+      return "updated_desc";
+  }
+}
+
+function normalizeUpcomingSort(value: string | undefined): UpcomingSortOption {
+  switch (value) {
+    case "type":
+    case "status":
+    case "title":
+      return value;
+    case "date_asc":
+    default:
+      return "date_asc";
+  }
+}
+
+function normalizeDensity(value: string | undefined): WorkspaceDensity {
+  switch (value) {
+    case "compact":
+      return "compact";
+    case "comfortable":
+    default:
+      return "comfortable";
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -32,13 +90,26 @@ export async function generateMetadata({
   };
 }
 
-export default async function BrandPage({ params }: BrandPageProps) {
+export default async function BrandPage({
+  params,
+  searchParams,
+}: BrandPageProps) {
   const { brandId } = await params;
+  const resolvedSearchParams = await searchParams;
   const brand = await getBrandWorkspaceBySlug(brandId);
 
   if (!brand) {
     notFound();
   }
+
+  const activeCampaign =
+    brand.campaigns.find(
+      (campaign) => campaign.id === resolvedSearchParams.campaign,
+    ) ?? null;
+  const taskSort = normalizeTaskSort(resolvedSearchParams.taskSort);
+  const assetSort = normalizeAssetSort(resolvedSearchParams.assetSort);
+  const upcomingSort = normalizeUpcomingSort(resolvedSearchParams.upcomingSort);
+  const density = normalizeDensity(resolvedSearchParams.density);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col">
@@ -71,7 +142,14 @@ export default async function BrandPage({ params }: BrandPageProps) {
           </div>
         }
       />
-      <BrandWorkspace brand={brand} />
+      <BrandWorkspace
+        brand={brand}
+        activeCampaignId={activeCampaign?.id ?? null}
+        taskSort={taskSort}
+        assetSort={assetSort}
+        upcomingSort={upcomingSort}
+        density={density}
+      />
     </div>
   );
 }

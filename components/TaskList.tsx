@@ -1,16 +1,17 @@
 import { Badge, EmptyState } from "@/components/ui";
 import { formatWeekdayDate } from "@/lib/date";
 import { taskPriorityTones, taskStatusTones } from "@/lib/design";
-import type { WorkspaceTask } from "@/lib/workspace-view";
+import type { WorkspaceCampaign, WorkspaceTask } from "@/lib/workspace-view";
 import { deleteTask } from "@/app/actions/workspace";
 import { TaskEditForm } from "@/components/TaskEditForm";
 
 type TaskListProps = {
   tasks: WorkspaceTask[];
   brandSlug: string;
+  campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
 };
 
-export function TaskList({ tasks, brandSlug }: TaskListProps) {
+export function TaskList({ tasks, brandSlug, campaigns }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <EmptyState
@@ -30,13 +31,22 @@ export function TaskList({ tasks, brandSlug }: TaskListProps) {
               <p className="mt-1 text-sm text-ink-muted">
                 {task.dueDate ? `Due ${formatWeekdayDate(task.dueDate)}` : "No due date"}
               </p>
+              {task.relatedCampaignTitle ? (
+                <p className="mt-1 text-sm text-ink-muted">
+                  Campaign: {task.relatedCampaignTitle}
+                </p>
+              ) : null}
             </div>
             <Badge tone={taskPriorityTones[task.priority]}>{task.priority}</Badge>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <Badge tone={taskStatusTones[task.status]}>{task.status}</Badge>
             <div className="flex flex-wrap items-center gap-3">
-              <TaskEditForm task={task} brandSlug={brandSlug} />
+              <TaskEditForm
+                task={task}
+                brandSlug={brandSlug}
+                campaigns={campaigns}
+              />
               <form action={deleteTask}>
                 <input type="hidden" name="taskId" value={task.id} />
                 <input type="hidden" name="brandSlug" value={brandSlug} />

@@ -3,9 +3,13 @@
 import { useState } from "react";
 
 import { updateUpcomingItem } from "@/app/actions/workspace";
+import { CampaignSelectField } from "@/components/CampaignSelectField";
 
 import { SubmitButton } from "@/components/SubmitButton";
-import type { WorkspaceUpcomingItem } from "@/lib/workspace-view";
+import type {
+  WorkspaceCampaign,
+  WorkspaceUpcomingItem,
+} from "@/lib/workspace-view";
 
 const initialState = {
   success: false,
@@ -15,9 +19,14 @@ const initialState = {
 type UpcomingEditFormProps = {
   item: WorkspaceUpcomingItem;
   brandSlug: string;
+  campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
 };
 
-export function UpcomingEditForm({ item, brandSlug }: UpcomingEditFormProps) {
+export function UpcomingEditForm({
+  item,
+  brandSlug,
+  campaigns,
+}: UpcomingEditFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
@@ -112,6 +121,11 @@ export function UpcomingEditForm({ item, brandSlug }: UpcomingEditFormProps) {
           className="app-input min-h-24 resize-y"
         />
       </label>
+
+      <CampaignSelectField
+        campaigns={campaigns}
+        defaultValue={item.relatedCampaignId ?? ""}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button

@@ -3,8 +3,10 @@
 import { useActionState, useEffect, useRef } from "react";
 
 import { createUpcomingItem } from "@/app/actions/workspace";
+import { CampaignSelectField } from "@/components/CampaignSelectField";
 
 import { SubmitButton } from "@/components/SubmitButton";
+import type { WorkspaceCampaign } from "@/lib/workspace-view";
 
 const initialState = {
   success: false,
@@ -14,11 +16,15 @@ const initialState = {
 type UpcomingCreateFormProps = {
   brandId: string;
   brandSlug: string;
+  campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
+  defaultCampaignId?: string | null;
 };
 
 export function UpcomingCreateForm({
   brandId,
   brandSlug,
+  campaigns,
+  defaultCampaignId = null,
 }: UpcomingCreateFormProps) {
   const [state, formAction] = useActionState(createUpcomingItem, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -77,6 +83,11 @@ export function UpcomingCreateForm({
           Timeline items show up on the dashboard automatically after save.
         </div>
       </div>
+
+      <CampaignSelectField
+        campaigns={campaigns}
+        defaultValue={defaultCampaignId ?? ""}
+      />
 
       <label className="space-y-2">
         <span className="text-sm font-medium text-ink">Notes</span>

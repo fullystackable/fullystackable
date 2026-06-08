@@ -1,4 +1,5 @@
 import { deleteContact } from "@/app/actions/workspace";
+import { ContactEditForm } from "@/components/ContactEditForm";
 import { Badge, EmptyState } from "@/components/ui";
 import type { WorkspaceContact } from "@/lib/workspace-view";
 
@@ -36,16 +37,19 @@ export function ContactList({
             <div className="flex flex-wrap gap-2">
               <Badge>{contact.contactType}</Badge>
               {allowDelete && brandSlug ? (
-                <form action={deleteContact}>
-                  <input type="hidden" name="contactId" value={contact.id} />
-                  <input type="hidden" name="brandSlug" value={brandSlug} />
-                  <button
-                    type="submit"
-                    className="text-sm font-medium text-danger hover:opacity-80"
-                  >
-                    Remove
-                  </button>
-                </form>
+                <>
+                  <ContactEditForm contact={contact} brandSlug={brandSlug} />
+                  <form action={deleteContact}>
+                    <input type="hidden" name="contactId" value={contact.id} />
+                    <input type="hidden" name="brandSlug" value={brandSlug} />
+                    <button
+                      type="submit"
+                      className="text-sm font-medium text-danger hover:opacity-80"
+                    >
+                      Remove
+                    </button>
+                  </form>
+                </>
               ) : null}
             </div>
           </div>

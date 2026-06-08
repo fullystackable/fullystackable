@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandEditForm } from "@/components/BrandEditForm";
 import { Badge, Card } from "@/components/ui";
 import { brandStatusTones } from "@/lib/design";
 import type { BrandDirectoryItem } from "@/lib/workspace-view";
@@ -73,6 +74,19 @@ export function BrandCard({ brand }: BrandCardProps) {
             Open workspace
           </Link>
         </div>
+
+        <BrandEditForm
+          brand={{
+            id: brand.id,
+            slug: brand.slug,
+            name: brand.name,
+            descriptionValue: brand.descriptionValue,
+            website: brand.website,
+            statusValue: brand.statusValue,
+            brandNotes: brand.brandNotes,
+          }}
+          buttonLabel="Quick edit"
+        />
       </div>
     </Card>
   );

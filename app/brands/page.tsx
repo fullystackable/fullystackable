@@ -1,13 +1,33 @@
 import { BrandCreateForm } from "@/components/BrandCreateForm";
 import { BrandCard } from "@/components/BrandCard";
+import { BrandDirectoryFilters } from "@/components/BrandDirectoryFilters";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Badge, Card, EmptyState, SectionHeader } from "@/components/ui";
 import { getBrandDirectoryPageData } from "@/lib/brand-workspaces";
 
 export const dynamic = "force-dynamic";
 
-export default async function BrandsPage() {
-  const { brands, statusSummary } = await getBrandDirectoryPageData();
+type BrandsPageProps = {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+  }>;
+};
+
+export default async function BrandsPage({ searchParams }: BrandsPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const {
+    brands,
+    statusSummary,
+    totalBrands,
+    currentBrandsCount,
+    filteredCount,
+    activeFilters,
+    hasFilters,
+  } = await getBrandDirectoryPageData({
+    query: resolvedSearchParams.q,
+    status: resolvedSearchParams.status,
+  });
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col">
@@ -15,7 +35,7 @@ export default async function BrandsPage() {
         eyebrow="Portfolio"
         title="All brands"
         subtitle="Browse every active account, quickly spot risk, and jump straight into the workspace that needs attention."
-        meta={<Badge>{brands.length} brands in portfolio</Badge>}
+        meta={<Badge>{currentBrandsCount} current brands in portfolio</Badge>}
       />
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -45,12 +65,27 @@ export default async function BrandsPage() {
         <SectionHeader
           title="Workspace directory"
           description="Each brand includes active tasks, creative assets, contacts, upcoming work, and notes so the whole operating picture stays visible."
-          action={<Badge>{brands.length} brands</Badge>}
+          action={<Badge>{filteredCount} shown</Badge>}
+        />
+
+        <BrandDirectoryFilters
+          query={activeFilters.query}
+          status={activeFilters.status}
+          filteredCount={filteredCount}
+          totalBrands={totalBrands}
+          currentBrandsCount={currentBrandsCount}
+          hasFilters={hasFilters}
         />
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {brands.length > 0 ? (
             brands.map((brand) => <BrandCard key={brand.id} brand={brand} />)
+          ) : totalBrands > 0 ? (
+            <EmptyState
+              title="No brands match these filters"
+              description="Try a broader search, switch the status filter, or clear the current filters."
+              className="lg:col-span-2"
+            />
           ) : (
             <EmptyState
               title="No brand workspaces yet"

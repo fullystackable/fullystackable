@@ -3,8 +3,10 @@
 import { useActionState, useEffect, useRef } from "react";
 
 import { createTask } from "@/app/actions/workspace";
+import { CampaignSelectField } from "@/components/CampaignSelectField";
 
 import { SubmitButton } from "@/components/SubmitButton";
+import type { WorkspaceCampaign } from "@/lib/workspace-view";
 
 const initialState = {
   success: false,
@@ -14,9 +16,16 @@ const initialState = {
 type TaskCreateFormProps = {
   brandId: string;
   brandSlug: string;
+  campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
+  defaultCampaignId?: string | null;
 };
 
-export function TaskCreateForm({ brandId, brandSlug }: TaskCreateFormProps) {
+export function TaskCreateForm({
+  brandId,
+  brandSlug,
+  campaigns,
+  defaultCampaignId = null,
+}: TaskCreateFormProps) {
   const [state, formAction] = useActionState(createTask, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -41,7 +50,7 @@ export function TaskCreateForm({ brandId, brandSlug }: TaskCreateFormProps) {
         />
       </label>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Due date</span>
           <input name="dueDate" type="date" className="app-input" />
@@ -56,6 +65,11 @@ export function TaskCreateForm({ brandId, brandSlug }: TaskCreateFormProps) {
             <option value="urgent">Urgent</option>
           </select>
         </label>
+
+        <CampaignSelectField
+          campaigns={campaigns}
+          defaultValue={defaultCampaignId ?? ""}
+        />
       </div>
 
       <label className="space-y-2">

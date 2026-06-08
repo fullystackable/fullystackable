@@ -1,4 +1,5 @@
 import { deleteCampaign } from "@/app/actions/workspace";
+import { CampaignEditForm } from "@/components/CampaignEditForm";
 import { Badge, EmptyState } from "@/components/ui";
 import { formatShortDate } from "@/lib/date";
 import type { WorkspaceCampaign } from "@/lib/workspace-view";
@@ -7,12 +8,14 @@ type CampaignListProps = {
   campaigns: WorkspaceCampaign[];
   brandSlug?: string;
   allowDelete?: boolean;
+  activeCampaignId?: string | null;
 };
 
 export function CampaignList({
   campaigns,
   brandSlug,
   allowDelete = false,
+  activeCampaignId = null,
 }: CampaignListProps) {
   if (campaigns.length === 0) {
     return (
@@ -37,17 +40,23 @@ export function CampaignList({
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge>{campaign.status}</Badge>
+              {activeCampaignId === campaign.id ? (
+                <Badge tone="accent">Focused</Badge>
+              ) : null}
               {allowDelete && brandSlug ? (
-                <form action={deleteCampaign}>
-                  <input type="hidden" name="campaignId" value={campaign.id} />
-                  <input type="hidden" name="brandSlug" value={brandSlug} />
-                  <button
-                    type="submit"
-                    className="text-sm font-medium text-danger hover:opacity-80"
-                  >
-                    Remove
-                  </button>
-                </form>
+                <>
+                  <CampaignEditForm campaign={campaign} brandSlug={brandSlug} />
+                  <form action={deleteCampaign}>
+                    <input type="hidden" name="campaignId" value={campaign.id} />
+                    <input type="hidden" name="brandSlug" value={brandSlug} />
+                    <button
+                      type="submit"
+                      className="text-sm font-medium text-danger hover:opacity-80"
+                    >
+                      Remove
+                    </button>
+                  </form>
+                </>
               ) : null}
             </div>
           </div>

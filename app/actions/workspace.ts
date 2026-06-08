@@ -60,6 +60,38 @@ function toTimestampAtMidday(date: string) {
   return `${date}T15:00:00Z`;
 }
 
+function parseGoals(value: string) {
+  return value
+    .split(",")
+    .map((goal) => goal.trim())
+    .filter(Boolean);
+}
+
+function normalizeAssetLocationFields(
+  sourceType: string,
+  url: string,
+  storagePath: string,
+) {
+  if (sourceType === "external_url") {
+    return {
+      url: url || null,
+      storagePath: null,
+    };
+  }
+
+  if (sourceType === "upload") {
+    return {
+      url: null,
+      storagePath: storagePath || null,
+    };
+  }
+
+  return {
+    url: url || null,
+    storagePath: storagePath || null,
+  };
+}
+
 export async function createBrand(
   _previousState: ActionState,
   formData: FormData,
@@ -101,6 +133,61 @@ export async function createBrand(
   };
 }
 
+export async function updateBrand(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const brandId = getString(formData, "brandId");
+  const brandSlug = getString(formData, "brandSlug");
+  const name = getString(formData, "name");
+  const website = getString(formData, "website");
+  const description = getString(formData, "description");
+  const status = getString(formData, "status") || "active";
+  const notes = getString(formData, "notes");
+
+  if (!brandId || !brandSlug) {
+    return {
+      success: false,
+      message: "Brand context is missing.",
+    };
+  }
+
+  if (!name) {
+    return {
+      success: false,
+      message: "Brand name is required.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("brands")
+    .update({
+      name,
+      website: website || null,
+      description: description || null,
+      status,
+      notes: notes || null,
+    })
+    .eq("id", brandId);
+
+  if (error) {
+    return {
+      success: false,
+      message: `Could not update brand: ${error.message}`,
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+
+  return {
+    success: true,
+    message: "Brand updated.",
+  };
+}
+
 export async function deleteBrand(formData: FormData) {
   const brandId = getString(formData, "brandId");
 
@@ -126,6 +213,7 @@ export async function createTask(
 ): Promise<ActionState> {
   const brandId = getString(formData, "brandId");
   const brandSlug = getString(formData, "brandSlug");
+  const relatedCampaignId = getString(formData, "relatedCampaignId");
   const title = getString(formData, "title");
   const dueDate = getString(formData, "dueDate");
   const priority = getString(formData, "priority") || "medium";
@@ -148,6 +236,7 @@ export async function createTask(
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("tasks").insert({
     brand_id: brandId,
+    related_campaign_id: relatedCampaignId || null,
     title,
     due_date: dueDate || null,
     status: "planned",
@@ -198,6 +287,7 @@ export async function updateTask(
 ): Promise<ActionState> {
   const taskId = getString(formData, "taskId");
   const brandSlug = getString(formData, "brandSlug");
+  const relatedCampaignId = getString(formData, "relatedCampaignId");
   const title = getString(formData, "title");
   const dueDate = getString(formData, "dueDate");
   const status = getString(formData, "status") || "planned";
@@ -222,6 +312,7 @@ export async function updateTask(
   const { error } = await supabase
     .from("tasks")
     .update({
+      related_campaign_id: relatedCampaignId || null,
       title,
       due_date: dueDate || null,
       status,
@@ -427,6 +518,64 @@ export async function createContact(
   };
 }
 
+export async function updateContact(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const contactId = getString(formData, "contactId");
+  const brandSlug = getString(formData, "brandSlug");
+  const name = getString(formData, "name");
+  const role = getString(formData, "role");
+  const company = getString(formData, "company");
+  const email = getString(formData, "email");
+  const phone = getString(formData, "phone");
+  const contactType = getString(formData, "contactType") || "other";
+  const notes = getString(formData, "notes");
+
+  if (!contactId || !brandSlug) {
+    return {
+      success: false,
+      message: "Contact context is missing.",
+    };
+  }
+
+  if (!name) {
+    return {
+      success: false,
+      message: "Contact name is required.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("contacts")
+    .update({
+      name,
+      role: role || null,
+      company: company || null,
+      email: email || null,
+      phone: phone || null,
+      contact_type: contactType,
+      notes: notes || null,
+    })
+    .eq("id", contactId);
+
+  if (error) {
+    return {
+      success: false,
+      message: `Could not update contact: ${error.message}`,
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+
+  return {
+    success: true,
+    message: "Contact updated.",
+  };
+}
+
 export async function deleteContact(formData: FormData) {
   const contactId = getString(formData, "contactId");
   const brandSlug = getString(formData, "brandSlug");
@@ -452,6 +601,7 @@ export async function createAsset(
 ): Promise<ActionState> {
   const brandId = getString(formData, "brandId");
   const brandSlug = getString(formData, "brandSlug");
+  const relatedCampaignId = getString(formData, "relatedCampaignId");
   const title = getString(formData, "title");
   const assetType = getString(formData, "assetType") || "other";
   const sourceType = getString(formData, "sourceType") || "reference";
@@ -460,6 +610,7 @@ export async function createAsset(
   const description = getString(formData, "description");
   const status = getString(formData, "status") || "active";
   const priority = getString(formData, "priority") || "medium";
+  const notes = getString(formData, "notes");
 
   if (!brandId || !brandSlug) {
     return {
@@ -489,17 +640,25 @@ export async function createAsset(
     };
   }
 
+  const normalizedLocation = normalizeAssetLocationFields(
+    sourceType,
+    url,
+    storagePath,
+  );
+
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("assets").insert({
     brand_id: brandId,
+    related_campaign_id: relatedCampaignId || null,
     title,
     asset_type: assetType,
     source_type: sourceType,
-    url: url || null,
-    storage_path: storagePath || null,
+    url: normalizedLocation.url,
+    storage_path: normalizedLocation.storagePath,
     description: description || null,
     status,
     priority,
+    notes: notes || null,
   });
 
   if (error) {
@@ -515,6 +674,90 @@ export async function createAsset(
   return {
     success: true,
     message: "Asset added.",
+  };
+}
+
+export async function updateAsset(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const assetId = getString(formData, "assetId");
+  const brandSlug = getString(formData, "brandSlug");
+  const relatedCampaignId = getString(formData, "relatedCampaignId");
+  const title = getString(formData, "title");
+  const assetType = getString(formData, "assetType") || "other";
+  const sourceType = getString(formData, "sourceType") || "reference";
+  const url = getString(formData, "url");
+  const storagePath = getString(formData, "storagePath");
+  const description = getString(formData, "description");
+  const status = getString(formData, "status") || "active";
+  const priority = getString(formData, "priority") || "medium";
+  const notes = getString(formData, "notes");
+
+  if (!assetId || !brandSlug) {
+    return {
+      success: false,
+      message: "Asset context is missing.",
+    };
+  }
+
+  if (!title) {
+    return {
+      success: false,
+      message: "Asset title is required.",
+    };
+  }
+
+  if (sourceType === "external_url" && !url) {
+    return {
+      success: false,
+      message: "External assets need a URL.",
+    };
+  }
+
+  if (sourceType === "upload" && !storagePath) {
+    return {
+      success: false,
+      message: "Upload-style assets need a storage path placeholder.",
+    };
+  }
+
+  const normalizedLocation = normalizeAssetLocationFields(
+    sourceType,
+    url,
+    storagePath,
+  );
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("assets")
+    .update({
+      related_campaign_id: relatedCampaignId || null,
+      title,
+      asset_type: assetType,
+      source_type: sourceType,
+      url: normalizedLocation.url,
+      storage_path: normalizedLocation.storagePath,
+      description: description || null,
+      status,
+      priority,
+      notes: notes || null,
+    })
+    .eq("id", assetId);
+
+  if (error) {
+    return {
+      success: false,
+      message: `Could not update asset: ${error.message}`,
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+
+  return {
+    success: true,
+    message: "Asset updated.",
   };
 }
 
@@ -543,6 +786,7 @@ export async function createUpcomingItem(
 ): Promise<ActionState> {
   const brandId = getString(formData, "brandId");
   const brandSlug = getString(formData, "brandSlug");
+  const relatedCampaignId = getString(formData, "relatedCampaignId");
   const title = getString(formData, "title");
   const date = getString(formData, "date");
   const type = getString(formData, "type") || "reminder";
@@ -573,6 +817,7 @@ export async function createUpcomingItem(
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("upcoming_items").insert({
     brand_id: brandId,
+    related_campaign_id: relatedCampaignId || null,
     title,
     date: toTimestampAtMidday(date),
     type,
@@ -626,6 +871,7 @@ export async function updateUpcomingItem(
 ): Promise<ActionState> {
   const upcomingItemId = getString(formData, "upcomingItemId");
   const brandSlug = getString(formData, "brandSlug");
+  const relatedCampaignId = getString(formData, "relatedCampaignId");
   const title = getString(formData, "title");
   const date = getString(formData, "date");
   const type = getString(formData, "type") || "reminder";
@@ -657,6 +903,7 @@ export async function updateUpcomingItem(
   const { error } = await supabase
     .from("upcoming_items")
     .update({
+      related_campaign_id: relatedCampaignId || null,
       title,
       date: toTimestampAtMidday(date),
       type,
@@ -710,12 +957,14 @@ export async function createCampaign(
     };
   }
 
-  const parsedGoals = goals
-    ? goals
-        .split(",")
-        .map((goal) => goal.trim())
-        .filter(Boolean)
-    : [];
+  if (startDate && endDate && endDate < startDate) {
+    return {
+      success: false,
+      message: "End date cannot be earlier than the start date.",
+    };
+  }
+
+  const parsedGoals = goals ? parseGoals(goals) : [];
 
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("campaigns").insert({
@@ -742,6 +991,71 @@ export async function createCampaign(
   return {
     success: true,
     message: "Campaign added.",
+  };
+}
+
+export async function updateCampaign(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const campaignId = getString(formData, "campaignId");
+  const brandSlug = getString(formData, "brandSlug");
+  const title = getString(formData, "title");
+  const description = getString(formData, "description");
+  const status = getString(formData, "status") || "planned";
+  const startDate = getString(formData, "startDate");
+  const endDate = getString(formData, "endDate");
+  const goals = getString(formData, "goals");
+  const notes = getString(formData, "notes");
+
+  if (!campaignId || !brandSlug) {
+    return {
+      success: false,
+      message: "Campaign context is missing.",
+    };
+  }
+
+  if (!title) {
+    return {
+      success: false,
+      message: "Campaign title is required.",
+    };
+  }
+
+  if (startDate && endDate && endDate < startDate) {
+    return {
+      success: false,
+      message: "End date cannot be earlier than the start date.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("campaigns")
+    .update({
+      title,
+      description: description || null,
+      status,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      goals: goals ? parseGoals(goals) : [],
+      notes: notes || null,
+    })
+    .eq("id", campaignId);
+
+  if (error) {
+    return {
+      success: false,
+      message: `Could not update campaign: ${error.message}`,
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+
+  return {
+    success: true,
+    message: "Campaign updated.",
   };
 }
 

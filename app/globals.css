@@ -126,6 +126,28 @@ select {
   padding: 1rem;
 }
 
+.workspace-density-compact .app-card {
+  border-radius: 1.25rem;
+  box-shadow: var(--app-shadow-soft);
+}
+
+.workspace-density-compact .app-subtle-card {
+  border-radius: 1rem;
+}
+
+.workspace-density-compact .metric-tile {
+  padding-top: 0.75rem;
+}
+
+.workspace-density-compact .data-list {
+  gap: 0.55rem;
+}
+
+.workspace-density-compact .data-row {
+  border-radius: 0.9rem;
+  padding: 0.8rem;
+}
+
 .app-input {
   width: 100%;
   border: 1px solid var(--app-border);

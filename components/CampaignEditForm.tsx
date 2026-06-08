@@ -2,28 +2,24 @@
 
 import { useState } from "react";
 
-import { updateTask } from "@/app/actions/workspace";
-import { CampaignSelectField } from "@/components/CampaignSelectField";
-
+import { updateCampaign } from "@/app/actions/workspace";
 import { SubmitButton } from "@/components/SubmitButton";
-import type { WorkspaceCampaign, WorkspaceTask } from "@/lib/workspace-view";
+import type { WorkspaceCampaign } from "@/lib/workspace-view";
 
 const initialState = {
   success: false,
   message: "",
 };
 
-type TaskEditFormProps = {
-  task: WorkspaceTask;
+type CampaignEditFormProps = {
+  campaign: WorkspaceCampaign;
   brandSlug: string;
-  campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
 };
 
-export function TaskEditForm({
-  task,
+export function CampaignEditForm({
+  campaign,
   brandSlug,
-  campaigns,
-}: TaskEditFormProps) {
+}: CampaignEditFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
@@ -41,7 +37,7 @@ export function TaskEditForm({
   }
 
   async function handleSubmit(formData: FormData) {
-    const result = await updateTask(initialState, formData);
+    const result = await updateCampaign(initialState, formData);
     setMessage(result.message);
     setWasSuccessful(result.success);
 
@@ -55,71 +51,82 @@ export function TaskEditForm({
       action={handleSubmit}
       className="mt-4 space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
     >
-      <input type="hidden" name="taskId" value={task.id} />
+      <input type="hidden" name="campaignId" value={campaign.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
 
       <label className="space-y-2">
-        <span className="text-sm font-medium text-ink">Task title</span>
+        <span className="text-sm font-medium text-ink">Campaign title</span>
         <input
           name="title"
           required
-          defaultValue={task.title}
+          defaultValue={campaign.title}
           className="app-input"
         />
       </label>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-ink">Due date</span>
-          <input
-            name="dueDate"
-            type="date"
-            defaultValue={task.dueDate ?? ""}
-            className="app-input"
-          />
-        </label>
-
+      <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Status</span>
           <select
             name="status"
-            defaultValue={task.status.toLowerCase().replace(/\s+/g, "_")}
+            defaultValue={campaign.statusValue}
             className="app-input"
           >
             <option value="planned">Planned</option>
-            <option value="in_progress">In progress</option>
-            <option value="needs_review">Needs review</option>
-            <option value="done">Done</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="completed">Completed</option>
             <option value="archived">Archived</option>
           </select>
         </label>
-
         <label className="space-y-2">
-          <span className="text-sm font-medium text-ink">Priority</span>
-          <select
-            name="priority"
-            defaultValue={task.priority.toLowerCase()}
+          <span className="text-sm font-medium text-ink">Goals</span>
+          <input
+            name="goals"
+            defaultValue={campaign.goals.join(", ")}
             className="app-input"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
+            placeholder="Launch offer, refresh creative, improve retargeting"
+          />
         </label>
       </div>
 
-      <CampaignSelectField
-        campaigns={campaigns}
-        defaultValue={task.relatedCampaignId ?? ""}
-      />
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Start date</span>
+          <input
+            name="startDate"
+            type="date"
+            defaultValue={campaign.startDate ?? ""}
+            className="app-input"
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">End date</span>
+          <input
+            name="endDate"
+            type="date"
+            defaultValue={campaign.endDate ?? ""}
+            className="app-input"
+          />
+        </label>
+      </div>
+
+      <label className="space-y-2">
+        <span className="text-sm font-medium text-ink">Description</span>
+        <textarea
+          name="description"
+          rows={3}
+          defaultValue={campaign.description ?? ""}
+          className="app-input min-h-24 resize-y"
+        />
+      </label>
 
       <label className="space-y-2">
         <span className="text-sm font-medium text-ink">Notes</span>
         <textarea
           name="notes"
           rows={3}
-          defaultValue={task.notes ?? ""}
+          defaultValue={campaign.notes ?? ""}
           className="app-input min-h-24 resize-y"
         />
       </label>
@@ -132,7 +139,7 @@ export function TaskEditForm({
         >
           Cancel
         </button>
-        <SubmitButton idleLabel="Save task" pendingLabel="Saving..." />
+        <SubmitButton idleLabel="Save campaign" pendingLabel="Saving..." />
       </div>
 
       {message ? (

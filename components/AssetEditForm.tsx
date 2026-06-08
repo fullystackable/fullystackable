@@ -1,43 +1,60 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useState } from "react";
 
-import { createAsset } from "@/app/actions/workspace";
+import { updateAsset } from "@/app/actions/workspace";
 import { CampaignSelectField } from "@/components/CampaignSelectField";
-
 import { SubmitButton } from "@/components/SubmitButton";
-import type { WorkspaceCampaign } from "@/lib/workspace-view";
+import type { WorkspaceAsset, WorkspaceCampaign } from "@/lib/workspace-view";
 
 const initialState = {
   success: false,
   message: "",
 };
 
-type AssetCreateFormProps = {
-  brandId: string;
+type AssetEditFormProps = {
+  asset: WorkspaceAsset;
   brandSlug: string;
   campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
-  defaultCampaignId?: string | null;
 };
 
-export function AssetCreateForm({
-  brandId,
+export function AssetEditForm({
+  asset,
   brandSlug,
   campaigns,
-  defaultCampaignId = null,
-}: AssetCreateFormProps) {
-  const [state, formAction] = useActionState(createAsset, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
+}: AssetEditFormProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [message, setMessage] = useState("");
+  const [wasSuccessful, setWasSuccessful] = useState(false);
 
-  useEffect(() => {
-    if (state.success) {
-      formRef.current?.reset();
+  if (!isEditing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        className="text-sm font-medium text-ink-muted hover:text-ink"
+      >
+        Edit
+      </button>
+    );
+  }
+
+  async function handleSubmit(formData: FormData) {
+    const result = await updateAsset(initialState, formData);
+    setMessage(result.message);
+    setWasSuccessful(result.success);
+
+    if (result.success) {
+      setIsEditing(false);
     }
-  }, [state.success]);
+  }
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4">
-      <input type="hidden" name="brandId" value={brandId} />
+    <form
+      action={handleSubmit}
+      className="mt-4 space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+    >
+      <input type="hidden" name="assetId" value={asset.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
 
       <label className="space-y-2">
@@ -45,15 +62,19 @@ export function AssetCreateForm({
         <input
           name="title"
           required
+          defaultValue={asset.title}
           className="app-input"
-          placeholder="Summer Launch Checklist"
         />
       </label>
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Asset type</span>
-          <select name="assetType" defaultValue="document" className="app-input">
+          <select
+            name="assetType"
+            defaultValue={asset.typeValue}
+            className="app-input"
+          >
             <option value="logo">Logo</option>
             <option value="brand_guidelines">Brand Guidelines</option>
             <option value="canva_design">Canva Design</option>
@@ -77,7 +98,11 @@ export function AssetCreateForm({
 
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Source mode</span>
-          <select name="sourceType" defaultValue="external_url" className="app-input">
+          <select
+            name="sourceType"
+            defaultValue={asset.sourceTypeValue}
+            className="app-input"
+          >
             <option value="external_url">External link</option>
             <option value="upload">Upload placeholder</option>
             <option value="reference">Reference record</option>
@@ -91,6 +116,7 @@ export function AssetCreateForm({
           <input
             name="url"
             type="url"
+            defaultValue={asset.url ?? ""}
             className="app-input"
             placeholder="https://example.com/asset"
           />
@@ -100,6 +126,7 @@ export function AssetCreateForm({
           <span className="text-sm font-medium text-ink">Storage path</span>
           <input
             name="storagePath"
+            defaultValue={asset.storagePath ?? ""}
             className="app-input"
             placeholder="brands/fun-slides/uploads/logo.svg"
           />
@@ -109,7 +136,11 @@ export function AssetCreateForm({
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Status</span>
-          <select name="status" defaultValue="active" className="app-input">
+          <select
+            name="status"
+            defaultValue={asset.statusValue}
+            className="app-input"
+          >
             <option value="active">Active</option>
             <option value="outdated">Outdated</option>
             <option value="draft">Draft</option>
@@ -119,7 +150,11 @@ export function AssetCreateForm({
 
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Priority</span>
-          <select name="priority" defaultValue="medium" className="app-input">
+          <select
+            name="priority"
+            defaultValue={asset.priorityValue}
+            className="app-input"
+          >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
@@ -129,7 +164,7 @@ export function AssetCreateForm({
 
       <CampaignSelectField
         campaigns={campaigns}
-        defaultValue={defaultCampaignId ?? ""}
+        defaultValue={asset.relatedCampaignId ?? ""}
       />
 
       <label className="space-y-2">
@@ -137,8 +172,8 @@ export function AssetCreateForm({
         <textarea
           name="description"
           rows={3}
+          defaultValue={asset.description ?? ""}
           className="app-input min-h-24 resize-y"
-          placeholder="What this asset is for, where it belongs, and how the team should use it."
         />
       </label>
 
@@ -147,28 +182,28 @@ export function AssetCreateForm({
         <textarea
           name="notes"
           rows={3}
+          defaultValue={asset.notes ?? ""}
           className="app-input min-h-24 resize-y"
-          placeholder="Optional handling notes, owner context, or next-step reminders."
         />
       </label>
 
-      <p className="text-sm text-ink-muted">
-        Use a URL for external assets, a storage path for upload placeholders, or neither for a simple reference record.
-      </p>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-ink-muted">
-          This creates the asset record first, which keeps the workspace organized even before file handling exists.
-        </p>
-        <SubmitButton idleLabel="Add asset" pendingLabel="Adding..." />
+        <button
+          type="button"
+          onClick={() => setIsEditing(false)}
+          className="text-sm font-medium text-ink-muted hover:text-ink"
+        >
+          Cancel
+        </button>
+        <SubmitButton idleLabel="Save asset" pendingLabel="Saving..." />
       </div>
 
-      {state.message ? (
+      {message ? (
         <p
-          className={`text-sm ${state.success ? "text-success" : "text-danger"}`}
+          className={`text-sm ${wasSuccessful ? "text-success" : "text-danger"}`}
           aria-live="polite"
         >
-          {state.message}
+          {message}
         </p>
       ) : null}
     </form>

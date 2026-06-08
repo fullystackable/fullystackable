@@ -2,16 +2,21 @@ import { deleteUpcomingItem } from "@/app/actions/workspace";
 import { UpcomingEditForm } from "@/components/UpcomingEditForm";
 import { Badge, EmptyState } from "@/components/ui";
 import { formatWeekdayDate } from "@/lib/date";
-import type { WorkspaceUpcomingItem } from "@/lib/workspace-view";
+import type {
+  WorkspaceCampaign,
+  WorkspaceUpcomingItem,
+} from "@/lib/workspace-view";
 
 type UpcomingListProps = {
   items: WorkspaceUpcomingItem[];
+  campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
   brandSlug?: string;
   allowDelete?: boolean;
 };
 
 export function UpcomingList({
   items,
+  campaigns,
   brandSlug,
   allowDelete = false,
 }: UpcomingListProps) {
@@ -34,12 +39,21 @@ export function UpcomingList({
               <p className="mt-1 text-sm text-ink-muted">
                 {formatWeekdayDate(item.date)} | {item.status}
               </p>
+              {item.relatedCampaignTitle ? (
+                <p className="mt-1 text-sm text-ink-muted">
+                  Campaign: {item.relatedCampaignTitle}
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge>{item.type}</Badge>
               {allowDelete && brandSlug ? (
                 <>
-                  <UpcomingEditForm item={item} brandSlug={brandSlug} />
+                  <UpcomingEditForm
+                    item={item}
+                    brandSlug={brandSlug}
+                    campaigns={campaigns}
+                  />
                   <form action={deleteUpcomingItem}>
                     <input type="hidden" name="upcomingItemId" value={item.id} />
                     <input type="hidden" name="brandSlug" value={brandSlug} />

@@ -4,6 +4,14 @@ export type BrandStatusLabel =
   | "Launching soon"
   | "Archived";
 
+export type BrandStatusValue =
+  | "active"
+  | "needs_attention"
+  | "launching"
+  | "archived";
+
+export type WorkspaceDensity = "comfortable" | "compact";
+
 export type TaskStatusLabel =
   | "In progress"
   | "Needs review"
@@ -13,13 +21,60 @@ export type TaskStatusLabel =
 
 export type TaskPriorityLabel = "Low" | "Medium" | "High" | "Urgent";
 
+export type CampaignStatusValue =
+  | "planned"
+  | "active"
+  | "paused"
+  | "completed"
+  | "archived";
+
+export type ContactTypeValue =
+  | "owner"
+  | "vendor"
+  | "staff"
+  | "ad_rep"
+  | "designer"
+  | "photographer"
+  | "web"
+  | "agency"
+  | "other";
+
+export type AssetTypeValue =
+  | "logo"
+  | "brand_guidelines"
+  | "canva_design"
+  | "photo_folder"
+  | "video_folder"
+  | "ad_creative"
+  | "print_file"
+  | "website_link"
+  | "social_profile"
+  | "google_drive_folder"
+  | "dropbox_folder"
+  | "document"
+  | "spreadsheet"
+  | "pdf"
+  | "contract"
+  | "vendor_file"
+  | "campaign_asset"
+  | "other";
+
+export type AssetSourceTypeValue = "external_url" | "upload" | "reference";
+
+export type AssetStatusValue = "active" | "outdated" | "draft" | "archived";
+
+export type AssetPriorityValue = "low" | "medium" | "high";
+
 export type BrandDirectoryItem = {
   id: string;
   slug: string;
   name: string;
   description: string;
+  descriptionValue: string | null;
   website: string | null;
   status: BrandStatusLabel;
+  statusValue: BrandStatusValue;
+  brandNotes: string | null;
   tasksCount: number;
   assetsCount: number;
   urgentTasks: number;
@@ -32,18 +87,28 @@ export type WorkspaceTask = {
   status: TaskStatusLabel;
   priority: TaskPriorityLabel;
   notes: string | null;
+  relatedCampaignId: string | null;
+  relatedCampaignTitle: string | null;
 };
 
 export type WorkspaceAsset = {
   id: string;
   title: string;
   type: string;
+  typeValue: AssetTypeValue;
   sourceType: string;
+  sourceTypeValue: AssetSourceTypeValue;
   status: string;
+  statusValue: AssetStatusValue;
+  priority: string;
+  priorityValue: AssetPriorityValue;
   url: string | null;
   storagePath: string | null;
   description: string | null;
+  notes: string | null;
   updatedAt: string;
+  relatedCampaignId: string | null;
+  relatedCampaignTitle: string | null;
 };
 
 export type WorkspaceContact = {
@@ -54,6 +119,7 @@ export type WorkspaceContact = {
   email: string | null;
   phone: string | null;
   contactType: string;
+  contactTypeValue: ContactTypeValue;
   notes: string | null;
 };
 
@@ -62,6 +128,7 @@ export type WorkspaceCampaign = {
   title: string;
   description: string | null;
   status: string;
+  statusValue: CampaignStatusValue;
   startDate: string | null;
   endDate: string | null;
   goals: string[];
@@ -75,6 +142,8 @@ export type WorkspaceUpcomingItem = {
   type: string;
   status: string;
   notes: string | null;
+  relatedCampaignId: string | null;
+  relatedCampaignTitle: string | null;
 };
 
 export type WorkspaceNote = {
@@ -95,8 +164,11 @@ export type BrandWorkspaceData = {
   slug: string;
   name: string;
   description: string;
+  descriptionValue: string | null;
   website: string | null;
   status: BrandStatusLabel;
+  statusValue: BrandStatusValue;
+  brandNotes: string | null;
   tasks: WorkspaceTask[];
   assets: WorkspaceAsset[];
   contacts: WorkspaceContact[];
@@ -112,7 +184,7 @@ export type StatusSummaryItem = {
 };
 
 export function mapBrandStatus(
-  status: "active" | "needs_attention" | "launching" | "archived",
+  status: BrandStatusValue,
 ): BrandStatusLabel {
   switch (status) {
     case "active":
