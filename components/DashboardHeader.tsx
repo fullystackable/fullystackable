@@ -1,58 +1,37 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
+
+import { Badge } from "@/components/ui";
 
 type DashboardHeaderProps = {
-  active: "dashboard" | "brands";
   eyebrow: string;
   title: string;
   subtitle: string;
+  meta?: ReactNode;
+  action?: ReactNode;
 };
 
-const navItems = [
-  { href: "/", label: "Dashboard", key: "dashboard" },
-  { href: "/brands", label: "Brands", key: "brands" },
-] as const;
-
 export function DashboardHeader({
-  active,
   eyebrow,
   title,
   subtitle,
+  meta,
+  action,
 }: DashboardHeaderProps) {
   return (
-    <header className="mb-8 rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
-            {eyebrow}
-          </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            {title}
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-            {subtitle}
-          </p>
-        </div>
-
-        <nav className="flex flex-wrap gap-2">
-          {navItems.map((item) => {
-            const isActive = item.key === active;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium ${
-                  isActive
-                    ? "bg-slate-950 text-white shadow-[0_8px_20px_rgba(15,23,42,0.18)]"
-                    : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+    <header className="mb-8 flex flex-col gap-5 border-b border-app-line pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <div className="min-w-0 max-w-3xl">
+        <Badge tone="info">{eyebrow}</Badge>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          {title}
+        </h1>
+        <p className="mt-3 text-sm leading-7 text-ink-muted sm:text-base">
+          {subtitle}
+        </p>
+        {meta ? <div className="mt-4 flex flex-wrap gap-2">{meta}</div> : null}
       </div>
+      {action ? (
+        <div className="shrink-0 self-start lg:self-end">{action}</div>
+      ) : null}
     </header>
   );
 }

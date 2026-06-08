@@ -1,34 +1,77 @@
-import type { Asset } from "@/data/mockData";
+import { deleteAsset } from "@/app/actions/workspace";
+import { Badge, EmptyState } from "@/components/ui";
 import { formatShortDate } from "@/lib/date";
+import type { WorkspaceAsset } from "@/lib/workspace-view";
 
 type AssetListProps = {
-  assets: Asset[];
+  assets: WorkspaceAsset[];
+  brandSlug?: string;
+  allowDelete?: boolean;
 };
 
-export function AssetList({ assets }: AssetListProps) {
+export function AssetList({
+  assets,
+  brandSlug,
+  allowDelete = false,
+}: AssetListProps) {
+  if (assets.length === 0) {
+    return (
+      <EmptyState
+        title="No assets yet"
+        description="Creative files, reference documents, and working links will show up here when they are added."
+      />
+    );
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="data-list">
       {assets.map((asset) => (
-        <article
-          key={asset.id}
-          className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <article key={asset.id} className="data-row">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-950">{asset.name}</h3>
-              <p className="mt-1 text-sm text-slate-600">
-                {asset.type} | Updated {formatShortDate(asset.updatedAt)}
+              <h3 className="text-base font-semibold text-ink">{asset.title}</h3>
+              <p className="mt-1 text-sm text-ink-muted">
+                {asset.type} | {asset.sourceType} | Updated {formatShortDate(asset.updatedAt)}
               </p>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge>{asset.type}</Badge>
+              <Badge>{asset.status}</Badge>
+              {allowDelete && brandSlug ? (
+                <form action={deleteAsset}>
+                  <input type="hidden" name="assetId" value={asset.id} />
+                  <input type="hidden" name="brandSlug" value={brandSlug} />
+                  <button
+                    type="submit"
+                    className="text-sm font-medium text-danger hover:opacity-80"
+                  >
+                    Remove
+                  </button>
+                </form>
+              ) : null}
+            </div>
+          </div>
+          {asset.description ? (
+            <p className="mt-3 text-sm leading-6 text-ink-muted">{asset.description}</p>
+          ) : null}
+          {asset.url ? (
             <a
               href={asset.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+              className="mt-3 inline-flex items-center text-sm font-medium text-accent hover:text-app-sidebar"
             >
               Open link
             </a>
-          </div>
+          ) : asset.storagePath ? (
+            <p className="mt-3 text-sm font-medium text-ink-muted">
+              Stored in app: {asset.storagePath}
+            </p>
+          ) : (
+            <p className="mt-3 text-sm font-medium text-ink-muted">
+              Reference-only asset
+            </p>
+          )}
         </article>
       ))}
     </div>

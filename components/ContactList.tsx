@@ -1,32 +1,71 @@
-import type { Contact } from "@/data/mockData";
+import { deleteContact } from "@/app/actions/workspace";
+import { Badge, EmptyState } from "@/components/ui";
+import type { WorkspaceContact } from "@/lib/workspace-view";
 
 type ContactListProps = {
-  contacts: Contact[];
+  contacts: WorkspaceContact[];
+  brandSlug?: string;
+  allowDelete?: boolean;
 };
 
-export function ContactList({ contacts }: ContactListProps) {
+export function ContactList({
+  contacts,
+  brandSlug,
+  allowDelete = false,
+}: ContactListProps) {
+  if (contacts.length === 0) {
+    return (
+      <EmptyState
+        title="No contacts added"
+        description="Key client and partner contacts will appear here once the workspace is populated."
+      />
+    );
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="data-list">
       {contacts.map((contact) => (
-        <article
-          key={contact.id}
-          className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
-        >
+        <article key={contact.id} className="data-row">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-950">{contact.name}</h3>
-              <p className="mt-1 text-sm text-slate-600">{contact.role}</p>
+              <h3 className="text-base font-semibold text-ink">{contact.name}</h3>
+              <p className="mt-1 text-sm text-ink-muted">
+                {[contact.role, contact.company].filter(Boolean).join(" | ") || "No role added"}
+              </p>
             </div>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200">
-              {contact.channel}
-            </span>
+            <div className="flex flex-wrap gap-2">
+              <Badge>{contact.contactType}</Badge>
+              {allowDelete && brandSlug ? (
+                <form action={deleteContact}>
+                  <input type="hidden" name="contactId" value={contact.id} />
+                  <input type="hidden" name="brandSlug" value={brandSlug} />
+                  <button
+                    type="submit"
+                    className="text-sm font-medium text-danger hover:opacity-80"
+                  >
+                    Remove
+                  </button>
+                </form>
+              ) : null}
+            </div>
           </div>
-          <a
-            href={`mailto:${contact.email}`}
-            className="mt-3 inline-flex text-sm font-medium text-blue-700 hover:text-blue-900"
-          >
-            {contact.email}
-          </a>
+          {contact.email ? (
+            <a
+              href={`mailto:${contact.email}`}
+              className="mt-3 inline-flex text-sm font-medium text-accent hover:text-app-sidebar"
+            >
+              {contact.email}
+            </a>
+          ) : contact.phone ? (
+            <p className="mt-3 text-sm font-medium text-ink-muted">{contact.phone}</p>
+          ) : (
+            <p className="mt-3 text-sm font-medium text-ink-muted">
+              No direct contact info added
+            </p>
+          )}
+          {contact.notes ? (
+            <p className="mt-3 text-sm leading-6 text-ink-muted">{contact.notes}</p>
+          ) : null}
         </article>
       ))}
     </div>

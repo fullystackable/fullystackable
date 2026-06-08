@@ -1,45 +1,57 @@
-import type { Task } from "@/data/mockData";
+import { Badge, EmptyState } from "@/components/ui";
 import { formatWeekdayDate } from "@/lib/date";
+import { taskPriorityTones, taskStatusTones } from "@/lib/design";
+import type { WorkspaceTask } from "@/lib/workspace-view";
+import { deleteTask } from "@/app/actions/workspace";
+import { TaskEditForm } from "@/components/TaskEditForm";
 
 type TaskListProps = {
-  tasks: Task[];
+  tasks: WorkspaceTask[];
+  brandSlug: string;
 };
 
-const priorityStyles: Record<Task["priority"], string> = {
-  High: "text-rose-700 bg-rose-50 ring-1 ring-rose-200",
-  Medium: "text-amber-700 bg-amber-50 ring-1 ring-amber-200",
-  Low: "text-slate-700 bg-slate-100 ring-1 ring-slate-200",
-};
+export function TaskList({ tasks, brandSlug }: TaskListProps) {
+  if (tasks.length === 0) {
+    return (
+      <EmptyState
+        title="No tasks in this workspace"
+        description="As new campaign work, approvals, or production items are added, they will appear here."
+      />
+    );
+  }
 
-const statusStyles: Record<Task["status"], string> = {
-  "In progress": "text-blue-700",
-  "Needs review": "text-amber-700",
-  Planned: "text-slate-500",
-  Done: "text-emerald-700",
-};
-
-export function TaskList({ tasks }: TaskListProps) {
   return (
-    <div className="space-y-3">
+    <div className="data-list">
       {tasks.map((task) => (
-        <article
-          key={task.id}
-          className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
-        >
+        <article key={task.id} className="data-row">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold text-slate-950">{task.title}</h3>
-              <p className="mt-1 text-sm text-slate-600">
-                {task.assignee} | Due {formatWeekdayDate(task.dueDate)}
+            <div className="min-w-0">
+              <h3 className="text-base font-semibold text-ink">{task.title}</h3>
+              <p className="mt-1 text-sm text-ink-muted">
+                {task.dueDate ? `Due ${formatWeekdayDate(task.dueDate)}` : "No due date"}
               </p>
             </div>
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${priorityStyles[task.priority]}`}>
-              {task.priority}
-            </span>
+            <Badge tone={taskPriorityTones[task.priority]}>{task.priority}</Badge>
           </div>
-          <p className={`mt-3 text-sm font-medium ${statusStyles[task.status]}`}>
-            {task.status}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <Badge tone={taskStatusTones[task.status]}>{task.status}</Badge>
+            <div className="flex flex-wrap items-center gap-3">
+              <TaskEditForm task={task} brandSlug={brandSlug} />
+              <form action={deleteTask}>
+                <input type="hidden" name="taskId" value={task.id} />
+                <input type="hidden" name="brandSlug" value={brandSlug} />
+                <button
+                  type="submit"
+                  className="text-sm font-medium text-danger hover:opacity-80"
+                >
+                  Remove
+                </button>
+              </form>
+            </div>
+          </div>
+          {task.notes ? (
+            <p className="mt-3 text-sm leading-6 text-ink-muted">{task.notes}</p>
+          ) : null}
         </article>
       ))}
     </div>
