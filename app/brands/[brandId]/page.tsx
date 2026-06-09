@@ -7,7 +7,7 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { Badge } from "@/components/ui";
 import { getBrandWorkspaceBySlug } from "@/lib/brand-workspaces";
 import { brandStatusTones } from "@/lib/design";
-import type { WorkspaceDensity } from "@/lib/workspace-view";
+import type { TaskViewFilter, WorkspaceDensity } from "@/lib/workspace-view";
 
 type TaskSortOption = "due_asc" | "priority_desc" | "status" | "title";
 type AssetSortOption = "updated_desc" | "priority_desc" | "type" | "title";
@@ -18,6 +18,7 @@ type BrandPageProps = {
   searchParams: Promise<{
     campaign?: string;
     taskSort?: string;
+    taskView?: string;
     assetSort?: string;
     upcomingSort?: string;
     density?: string;
@@ -70,6 +71,16 @@ function normalizeDensity(value: string | undefined): WorkspaceDensity {
   }
 }
 
+function normalizeTaskView(value: string | undefined): TaskViewFilter {
+  switch (value) {
+    case "incomplete":
+      return "incomplete";
+    case "all":
+    default:
+      return "all";
+  }
+}
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -107,6 +118,7 @@ export default async function BrandPage({
       (campaign) => campaign.id === resolvedSearchParams.campaign,
     ) ?? null;
   const taskSort = normalizeTaskSort(resolvedSearchParams.taskSort);
+  const taskView = normalizeTaskView(resolvedSearchParams.taskView);
   const assetSort = normalizeAssetSort(resolvedSearchParams.assetSort);
   const upcomingSort = normalizeUpcomingSort(resolvedSearchParams.upcomingSort);
   const density = normalizeDensity(resolvedSearchParams.density);
@@ -146,6 +158,7 @@ export default async function BrandPage({
         brand={brand}
         activeCampaignId={activeCampaign?.id ?? null}
         taskSort={taskSort}
+        taskView={taskView}
         assetSort={assetSort}
         upcomingSort={upcomingSort}
         density={density}

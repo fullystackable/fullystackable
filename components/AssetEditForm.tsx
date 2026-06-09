@@ -5,6 +5,7 @@ import { useState } from "react";
 import { updateAsset } from "@/app/actions/workspace";
 import { CampaignSelectField } from "@/components/CampaignSelectField";
 import { SubmitButton } from "@/components/SubmitButton";
+import { assetCategoryOptions } from "@/lib/assets";
 import type { WorkspaceAsset, WorkspaceCampaign } from "@/lib/workspace-view";
 
 const initialState = {
@@ -29,13 +30,23 @@ export function AssetEditForm({
 
   if (!isEditing) {
     return (
-      <button
-        type="button"
-        onClick={() => setIsEditing(true)}
-        className="text-sm font-medium text-ink-muted hover:text-ink"
-      >
-        Edit
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="text-sm font-medium text-ink-muted hover:text-ink"
+        >
+          Edit
+        </button>
+        {wasSuccessful && message ? (
+          <p
+            className="order-last basis-full text-sm text-success"
+            aria-live="polite"
+          >
+            {message}
+          </p>
+        ) : null}
+      </>
     );
   }
 
@@ -52,7 +63,7 @@ export function AssetEditForm({
   return (
     <form
       action={handleSubmit}
-      className="mt-4 space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
     >
       <input type="hidden" name="assetId" value={asset.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -69,7 +80,22 @@ export function AssetEditForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-ink">Asset type</span>
+          <span className="text-sm font-medium text-ink">Category</span>
+          <select
+            name="assetCategory"
+            defaultValue={asset.categoryValue}
+            className="app-input"
+          >
+            {assetCategoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Asset detail type</span>
           <select
             name="assetType"
             defaultValue={asset.typeValue}
@@ -95,7 +121,9 @@ export function AssetEditForm({
             <option value="other">Other</option>
           </select>
         </label>
+      </div>
 
+      <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Source mode</span>
           <select
@@ -198,9 +226,9 @@ export function AssetEditForm({
         <SubmitButton idleLabel="Save asset" pendingLabel="Saving..." />
       </div>
 
-      {message ? (
+      {message && !wasSuccessful ? (
         <p
-          className={`text-sm ${wasSuccessful ? "text-success" : "text-danger"}`}
+          className="text-sm text-danger"
           aria-live="polite"
         >
           {message}

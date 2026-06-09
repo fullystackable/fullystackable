@@ -11,6 +11,16 @@ export type BrandStatusValue =
   | "archived";
 
 export type WorkspaceDensity = "comfortable" | "compact";
+export type TaskViewFilter = "all" | "incomplete";
+
+export type TaskStatusValue =
+  | "planned"
+  | "in_progress"
+  | "needs_review"
+  | "done"
+  | "archived";
+
+export type TaskPriorityValue = "low" | "medium" | "high" | "urgent";
 
 export type TaskStatusLabel =
   | "In progress"
@@ -65,6 +75,41 @@ export type AssetStatusValue = "active" | "outdated" | "draft" | "archived";
 
 export type AssetPriorityValue = "low" | "medium" | "high";
 
+export type AssetCategoryValue =
+  | "folder"
+  | "canva"
+  | "website_admin"
+  | "social_profile"
+  | "ad_platform"
+  | "analytics"
+  | "crm"
+  | "document"
+  | "creative_asset"
+  | "other";
+
+export type UpcomingItemTypeValue =
+  | "meeting"
+  | "event"
+  | "campaign_launch"
+  | "deadline"
+  | "reminder"
+  | "seasonal";
+
+export type UpcomingItemStatusValue =
+  | "scheduled"
+  | "completed"
+  | "canceled"
+  | "postponed";
+
+export type NoteCategoryValue =
+  | "brand_voice"
+  | "audience"
+  | "cta"
+  | "pricing"
+  | "reminder"
+  | "strategy"
+  | "random";
+
 export type BrandDirectoryItem = {
   id: string;
   slug: string;
@@ -78,6 +123,7 @@ export type BrandDirectoryItem = {
   tasksCount: number;
   assetsCount: number;
   urgentTasks: number;
+  searchMatchReason: string | null;
 };
 
 export type WorkspaceTask = {
@@ -85,7 +131,9 @@ export type WorkspaceTask = {
   title: string;
   dueDate: string | null;
   status: TaskStatusLabel;
+  statusValue: TaskStatusValue;
   priority: TaskPriorityLabel;
+  priorityValue: TaskPriorityValue;
   notes: string | null;
   relatedCampaignId: string | null;
   relatedCampaignTitle: string | null;
@@ -94,6 +142,8 @@ export type WorkspaceTask = {
 export type WorkspaceAsset = {
   id: string;
   title: string;
+  category: string;
+  categoryValue: AssetCategoryValue;
   type: string;
   typeValue: AssetTypeValue;
   sourceType: string;
@@ -140,7 +190,9 @@ export type WorkspaceUpcomingItem = {
   title: string;
   date: string;
   type: string;
+  typeValue: UpcomingItemTypeValue;
   status: string;
+  statusValue: UpcomingItemStatusValue;
   notes: string | null;
   relatedCampaignId: string | null;
   relatedCampaignTitle: string | null;
@@ -152,6 +204,7 @@ export type WorkspaceNote = {
   text: string;
   createdAt: string;
   category: string;
+  categoryValue?: NoteCategoryValue;
   pinned: boolean;
   brandId?: string;
   brandName?: string;
@@ -169,6 +222,14 @@ export type BrandWorkspaceData = {
   status: BrandStatusLabel;
   statusValue: BrandStatusValue;
   brandNotes: string | null;
+  brandVoice: string | null;
+  commonCtas: string | null;
+  audienceNotes: string | null;
+  servicesProducts: string | null;
+  pricingNotes: string | null;
+  positioningNotes: string | null;
+  doDontList: string | null;
+  referenceLinks: string | null;
   tasks: WorkspaceTask[];
   assets: WorkspaceAsset[];
   contacts: WorkspaceContact[];
@@ -199,7 +260,7 @@ export function mapBrandStatus(
 }
 
 export function mapTaskStatus(
-  status: "planned" | "in_progress" | "needs_review" | "done" | "archived",
+  status: TaskStatusValue,
 ): TaskStatusLabel {
   switch (status) {
     case "planned":
@@ -216,7 +277,7 @@ export function mapTaskStatus(
 }
 
 export function mapTaskPriority(
-  priority: "low" | "medium" | "high" | "urgent",
+  priority: TaskPriorityValue,
 ): TaskPriorityLabel {
   switch (priority) {
     case "low":
@@ -228,6 +289,10 @@ export function mapTaskPriority(
     case "urgent":
       return "Urgent";
   }
+}
+
+export function isTaskIncompleteStatus(status: TaskStatusValue) {
+  return status !== "done" && status !== "archived";
 }
 
 export function humanizeSnakeCase(value: string) {

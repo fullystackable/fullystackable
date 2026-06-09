@@ -8,12 +8,10 @@ import {
 } from "@/lib/date";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  humanizeSnakeCase,
   mapBrandStatus,
   mapTaskPriority,
   mapTaskStatus,
-  type BrandStatusLabel,
-  type TaskPriorityLabel,
-  type TaskStatusLabel,
   type WorkspaceNote,
 } from "@/lib/workspace-view";
 
@@ -38,8 +36,16 @@ type UpcomingRow = {
   brand_id: string;
   title: string;
   date: string;
-  type: string;
+  type: "meeting" | "event" | "campaign_launch" | "deadline" | "reminder" | "seasonal";
   status: "scheduled" | "completed" | "canceled" | "postponed";
+};
+
+type AssetRow = {
+  id: string;
+  brand_id: string;
+  title: string;
+  asset_type: string;
+  updated_at: string;
 };
 
 type NoteRow = {
@@ -50,15 +56,29 @@ type NoteRow = {
   created_at: string;
 };
 
+type CampaignRow = {
+  id: string;
+  brand_id: string;
+  title: string;
+  status: "planned" | "active" | "paused" | "completed" | "archived";
+  start_date: string | null;
+  end_date: string | null;
+};
+
+type BrandLookup = {
+  slug: string;
+  name: string;
+  status: ReturnType<typeof mapBrandStatus>;
+};
+
 export type DashboardTaskWithBrand = {
   id: string;
   title: string;
   dueDate: string;
-  status: TaskStatusLabel;
-  priority: TaskPriorityLabel;
+  status: ReturnType<typeof mapTaskStatus>;
+  priority: ReturnType<typeof mapTaskPriority>;
   brandSlug: string;
   brandName: string;
-  brandStatus: BrandStatusLabel;
   daysUntilDue: number;
 };
 
@@ -70,80 +90,83 @@ export type DashboardUpcomingWithBrand = {
   status: string;
   brandSlug: string;
   brandName: string;
-  brandStatus: BrandStatusLabel;
   daysUntil: number;
 };
 
-export type DashboardBrandHealthRow = {
-  brandId: string;
+export type DashboardAssetWithBrand = {
+  id: string;
+  title: string;
+  type: string;
+  updatedAt: string;
   brandSlug: string;
   brandName: string;
-  status: BrandStatusLabel;
-  openTasks: number;
-  urgentTasks: number;
-  upcomingItems: number;
-  attentionNow: number;
-  nextDate: string | null;
-  urgencyScore: number;
 };
 
-export type DashboardStats = {
+export type DashboardCampaignWithBrand = {
+  id: string;
+  title: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  brandSlug: string;
+  brandName: string;
+};
+
+export type GlobalDashboardStats = {
   activeBrands: number;
-  openTasks: number;
-  attentionNow: number;
-  thisWeek: number;
-  urgentTasks: number;
-  mostUrgentBrand: DashboardBrandHealthRow | null;
+  tasksDueThisWeek: number;
+  overdueTasks: number;
+  upcomingItems: number;
 };
 
-type DashboardData = {
-  stats: DashboardStats;
-  todaysFocus: DashboardTaskWithBrand[];
-  thisWeek: {
-    tasks: DashboardTaskWithBrand[];
-    upcoming: DashboardUpcomingWithBrand[];
-  };
-  brandHealth: DashboardBrandHealthRow[];
+export type GlobalDashboardData = {
+  stats: GlobalDashboardStats;
+  dueThisWeekTasks: DashboardTaskWithBrand[];
+  overdueTasks: DashboardTaskWithBrand[];
+  upcomingItems: DashboardUpcomingWithBrand[];
+  recentAssets: DashboardAssetWithBrand[];
   recentNotes: WorkspaceNote[];
+  recentCampaigns: DashboardCampaignWithBrand[];
   todayLabel: string;
-};
-
-const priorityRank: Record<TaskPriorityLabel, number> = {
-  Urgent: 0,
-  High: 1,
-  Medium: 2,
-  Low: 3,
-};
-
-const statusRank: Record<TaskStatusLabel, number> = {
-  "Needs review": 0,
-  "In progress": 1,
-  Planned: 2,
-  Done: 3,
-  Archived: 4,
-};
-
-const brandStatusWeight: Record<BrandStatusLabel, number> = {
-  "Needs attention": 2,
-  "Launching soon": 1,
-  "On track": 0,
-  Archived: -1,
 };
 
 function toDateOnly(value: string) {
   return value.slice(0, 10);
 }
 
-function humanizeSnakeCase(value: string) {
-  return value
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function truncateText(value: string, maxLength: number) {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
-export async function getDashboardPageData(baseDate: Date = new Date()) {
+function buildBrandLookup(brands: BrandRow[]) {
+  return new Map<string, BrandLookup>(
+    brands.map((brand) => [
+      brand.id,
+      {
+        slug: brand.slug,
+        name: brand.name,
+        status: mapBrandStatus(brand.status),
+      },
+    ]),
+  );
+}
+
+export async function getGlobalDashboardData(
+  baseDate: Date = new Date(),
+): Promise<GlobalDashboardData> {
   const supabase = createSupabaseServerClient();
-  const [brandsResult, tasksResult, upcomingResult, notesResult] = await Promise.all([
+  const [
+    brandsResult,
+    tasksResult,
+    upcomingResult,
+    assetsResult,
+    notesResult,
+    campaignsResult,
+  ] = await Promise.all([
     supabase
       .from("brands")
       .select("id, slug, name, status")
@@ -158,9 +181,19 @@ export async function getDashboardPageData(baseDate: Date = new Date()) {
       .select("id, brand_id, title, date, type, status")
       .neq("status", "canceled"),
     supabase
+      .from("assets")
+      .select("id, brand_id, title, asset_type, updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(6),
+    supabase
       .from("notes")
       .select("id, brand_id, title, body, created_at")
       .order("created_at", { ascending: false })
+      .limit(6),
+    supabase
+      .from("campaigns")
+      .select("id, brand_id, title, status, start_date, end_date")
+      .order("start_date", { ascending: false })
       .limit(6),
   ]);
 
@@ -173,35 +206,41 @@ export async function getDashboardPageData(baseDate: Date = new Date()) {
   }
 
   if (upcomingResult.error) {
-    throw new Error(`Failed to load dashboard upcoming items: ${upcomingResult.error.message}`);
+    throw new Error(
+      `Failed to load dashboard upcoming items: ${upcomingResult.error.message}`,
+    );
+  }
+
+  if (assetsResult.error) {
+    throw new Error(`Failed to load dashboard assets: ${assetsResult.error.message}`);
   }
 
   if (notesResult.error) {
     throw new Error(`Failed to load dashboard notes: ${notesResult.error.message}`);
   }
 
-  const brands = (brandsResult.data ?? []) as BrandRow[];
-  const brandsById = new Map(
-    brands.map((brand) => [
-      brand.id,
-      {
-        slug: brand.slug,
-        name: brand.name,
-        status: mapBrandStatus(brand.status),
-      },
-    ]),
-  );
+  if (campaignsResult.error) {
+    throw new Error(
+      `Failed to load dashboard campaigns: ${campaignsResult.error.message}`,
+    );
+  }
 
-  const openTasks = ((tasksResult.data ?? []) as TaskRow[])
-    .filter((task) => task.due_date && task.status !== "done")
-    .map((task) => {
+  const brands = (brandsResult.data ?? []) as BrandRow[];
+  const brandsById = buildBrandLookup(brands);
+
+  const trackedTasks = ((tasksResult.data ?? []) as TaskRow[])
+    .filter(
+      (task) =>
+        task.due_date && task.status !== "done" && task.status !== "archived",
+    )
+    .map((task): DashboardTaskWithBrand | null => {
       const brand = brandsById.get(task.brand_id);
 
       if (!brand) {
         return null;
       }
 
-      const dueDate = task.due_date!;
+      const dueDate = toDateOnly(task.due_date!);
 
       return {
         id: task.id,
@@ -211,29 +250,25 @@ export async function getDashboardPageData(baseDate: Date = new Date()) {
         priority: mapTaskPriority(task.priority),
         brandSlug: brand.slug,
         brandName: brand.name,
-        brandStatus: brand.status,
         daysUntilDue: differenceInCalendarDays(dueDate, baseDate),
-      } satisfies DashboardTaskWithBrand;
+      };
     })
-    .filter((task): task is DashboardTaskWithBrand => Boolean(task))
+    .filter((task): task is DashboardTaskWithBrand => task !== null)
     .sort((left, right) => {
       if (left.daysUntilDue !== right.daysUntilDue) {
         return left.daysUntilDue - right.daysUntilDue;
       }
 
-      if (priorityRank[left.priority] !== priorityRank[right.priority]) {
-        return priorityRank[left.priority] - priorityRank[right.priority];
-      }
-
-      if (statusRank[left.status] !== statusRank[right.status]) {
-        return statusRank[left.status] - statusRank[right.status];
-      }
-
-      return brandStatusWeight[right.brandStatus] - brandStatusWeight[left.brandStatus];
+      return left.title.localeCompare(right.title);
     });
 
+  const dueThisWeekTasks = trackedTasks.filter(
+    (task) => task.daysUntilDue >= 0 && task.daysUntilDue <= 7,
+  );
+  const overdueTasks = trackedTasks.filter((task) => task.daysUntilDue < 0);
+
   const upcomingItems = ((upcomingResult.data ?? []) as UpcomingRow[])
-    .map((item) => {
+    .map((item): DashboardUpcomingWithBrand | null => {
       const brand = brandsById.get(item.brand_id);
 
       if (!brand) {
@@ -250,70 +285,33 @@ export async function getDashboardPageData(baseDate: Date = new Date()) {
         status: humanizeSnakeCase(item.status),
         brandSlug: brand.slug,
         brandName: brand.name,
-        brandStatus: brand.status,
         daysUntil: differenceInCalendarDays(date, baseDate),
-      } satisfies DashboardUpcomingWithBrand;
+      };
     })
-    .filter((item): item is DashboardUpcomingWithBrand => Boolean(item))
+    .filter((item): item is DashboardUpcomingWithBrand => item !== null)
+    .filter((item) => item.daysUntil >= 0 && item.status !== "Completed")
     .sort((left, right) => compareDateStrings(left.date, right.date));
 
-  const brandHealth = brands
-    .map((brand) => {
-      const mappedStatus = mapBrandStatus(brand.status);
-      const brandTasks = openTasks.filter((task) => task.brandSlug === brand.slug);
-      const urgentTasks = brandTasks.filter(
-        (task) => task.priority === "High" || task.priority === "Urgent",
-      );
-      const attentionNow = brandTasks.filter((task) => task.daysUntilDue <= 1).length;
-      const brandUpcoming = upcomingItems.filter((item) => item.brandSlug === brand.slug);
-      const upcomingThisWeek = brandUpcoming.filter(
-        (item) => item.daysUntil >= 0 && item.daysUntil <= 7,
-      );
-      const nextDate =
-        [
-          ...brandTasks.map((task) => task.dueDate),
-          ...brandUpcoming.map((item) => item.date),
-        ].sort(compareDateStrings)[0] ?? null;
-      const urgencyScore =
-        urgentTasks.length * 4 +
-        attentionNow * 3 +
-        upcomingThisWeek.length * 2 +
-        brandStatusWeight[mappedStatus];
+  const recentAssets = ((assetsResult.data ?? []) as AssetRow[])
+    .map((asset): DashboardAssetWithBrand | null => {
+      const brand = brandsById.get(asset.brand_id);
+
+      if (!brand) {
+        return null;
+      }
 
       return {
-        brandId: brand.id,
+        id: asset.id,
+        title: asset.title,
+        type: humanizeSnakeCase(asset.asset_type),
+        updatedAt: toDateOnly(asset.updated_at),
         brandSlug: brand.slug,
         brandName: brand.name,
-        status: mappedStatus,
-        openTasks: brandTasks.length,
-        urgentTasks: urgentTasks.length,
-        upcomingItems: brandUpcoming.length,
-        attentionNow,
-        nextDate,
-        urgencyScore,
-      } satisfies DashboardBrandHealthRow;
+      };
     })
-    .sort((left, right) => {
-      if (left.urgencyScore !== right.urgencyScore) {
-        return right.urgencyScore - left.urgencyScore;
-      }
+    .filter((asset): asset is DashboardAssetWithBrand => asset !== null);
 
-      if (left.nextDate && right.nextDate) {
-        return compareDateStrings(left.nextDate, right.nextDate);
-      }
-
-      if (left.nextDate) {
-        return -1;
-      }
-
-      if (right.nextDate) {
-        return 1;
-      }
-
-      return left.brandName.localeCompare(right.brandName);
-    });
-
-  const recentNotes: WorkspaceNote[] = ((notesResult.data ?? []) as NoteRow[])
+  const recentNotes = ((notesResult.data ?? []) as NoteRow[])
     .map((note): WorkspaceNote | null => {
       const brand = brandsById.get(note.brand_id);
 
@@ -324,7 +322,7 @@ export async function getDashboardPageData(baseDate: Date = new Date()) {
       return {
         id: note.id,
         title: note.title,
-        text: note.body,
+        text: truncateText(note.body, 140),
         createdAt: toDateOnly(note.created_at),
         category: "Recent",
         pinned: false,
@@ -332,41 +330,63 @@ export async function getDashboardPageData(baseDate: Date = new Date()) {
         brandSlug: brand.slug,
         brandName: brand.name,
         brandStatus: brand.status,
-      } satisfies WorkspaceNote;
+      };
     })
     .filter((note): note is WorkspaceNote => note !== null)
     .sort(
       (left, right) =>
-        parseISODate(right.createdAt).getTime() - parseISODate(left.createdAt).getTime(),
-    )
-    .slice(0, 6);
+        parseISODate(right.createdAt).getTime() -
+        parseISODate(left.createdAt).getTime(),
+    );
 
-  const stats: DashboardStats = {
-    activeBrands: brands.length,
-    openTasks: openTasks.length,
-    attentionNow:
-      openTasks.filter((task) => task.daysUntilDue <= 0).length +
-      upcomingItems.filter((item) => item.daysUntil <= 0).length,
-    thisWeek:
-      openTasks.filter((task) => task.daysUntilDue >= 0 && task.daysUntilDue <= 7)
-        .length +
-      upcomingItems.filter((item) => item.daysUntil >= 0 && item.daysUntil <= 7)
-        .length,
-    urgentTasks: openTasks.filter(
-      (task) => task.priority === "High" || task.priority === "Urgent",
-    ).length,
-    mostUrgentBrand: brandHealth[0] ?? null,
-  };
+  const recentCampaigns = ((campaignsResult.data ?? []) as CampaignRow[])
+    .map((campaign): DashboardCampaignWithBrand | null => {
+      const brand = brandsById.get(campaign.brand_id);
+
+      if (!brand) {
+        return null;
+      }
+
+      return {
+        id: campaign.id,
+        title: campaign.title,
+        status: humanizeSnakeCase(campaign.status),
+        startDate: campaign.start_date ? toDateOnly(campaign.start_date) : null,
+        endDate: campaign.end_date ? toDateOnly(campaign.end_date) : null,
+        brandSlug: brand.slug,
+        brandName: brand.name,
+      };
+    })
+    .filter((campaign): campaign is DashboardCampaignWithBrand => campaign !== null)
+    .sort((left, right) => {
+      if (left.startDate && right.startDate) {
+        return compareDateStrings(right.startDate, left.startDate);
+      }
+
+      if (left.startDate) {
+        return -1;
+      }
+
+      if (right.startDate) {
+        return 1;
+      }
+
+      return left.title.localeCompare(right.title);
+    });
 
   return {
-    stats,
-    todaysFocus: openTasks.slice(0, 6),
-    thisWeek: {
-      tasks: openTasks.filter((task) => task.daysUntilDue >= 0 && task.daysUntilDue <= 7),
-      upcoming: upcomingItems.filter((item) => item.daysUntil >= 0 && item.daysUntil <= 7),
+    stats: {
+      activeBrands: brands.length,
+      tasksDueThisWeek: dueThisWeekTasks.length,
+      overdueTasks: overdueTasks.length,
+      upcomingItems: upcomingItems.length,
     },
-    brandHealth,
+    dueThisWeekTasks: dueThisWeekTasks.slice(0, 8),
+    overdueTasks: overdueTasks.slice(0, 8),
+    upcomingItems: upcomingItems.slice(0, 8),
+    recentAssets,
     recentNotes,
+    recentCampaigns,
     todayLabel: toISODate(baseDate),
-  } satisfies DashboardData;
+  };
 }

@@ -1,6 +1,7 @@
 import { deleteAsset } from "@/app/actions/workspace";
 import { AssetEditForm } from "@/components/AssetEditForm";
 import { Badge, EmptyState } from "@/components/ui";
+import { assetCategoryTones } from "@/lib/assets";
 import { formatShortDate } from "@/lib/date";
 import type { WorkspaceAsset, WorkspaceCampaign } from "@/lib/workspace-view";
 
@@ -9,21 +10,32 @@ type AssetListProps = {
   campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
   brandSlug?: string;
   allowDelete?: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
 };
+
+function getAssetAccessCopy(asset: WorkspaceAsset) {
+  if (asset.url) {
+    return "Open link";
+  }
+
+  if (asset.storagePath) {
+    return `Stored in app: ${asset.storagePath}`;
+  }
+
+  return "Reference-only asset";
+}
 
 export function AssetList({
   assets,
   campaigns,
   brandSlug,
   allowDelete = false,
+  emptyTitle = "No assets yet",
+  emptyDescription = "Creative files, reference documents, and working links will show up here when they are added.",
 }: AssetListProps) {
   if (assets.length === 0) {
-    return (
-      <EmptyState
-        title="No assets yet"
-        description="Creative files, reference documents, and working links will show up here when they are added."
-      />
-    );
+    return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
 
   return (
@@ -34,7 +46,8 @@ export function AssetList({
             <div>
               <h3 className="text-base font-semibold text-ink">{asset.title}</h3>
               <p className="mt-1 text-sm text-ink-muted">
-                {asset.type} | {asset.sourceType} | Updated {formatShortDate(asset.updatedAt)}
+                {asset.category} | {asset.type} | {asset.sourceType} | Updated{" "}
+                {formatShortDate(asset.updatedAt)}
               </p>
               {asset.relatedCampaignTitle ? (
                 <p className="mt-1 text-sm text-ink-muted">
@@ -43,6 +56,9 @@ export function AssetList({
               ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
+              <Badge tone={assetCategoryTones[asset.categoryValue]}>
+                {asset.category}
+              </Badge>
               <Badge>{asset.type}</Badge>
               <Badge>{asset.status}</Badge>
               <Badge>{asset.priority}</Badge>
@@ -80,15 +96,15 @@ export function AssetList({
               rel="noreferrer"
               className="mt-3 inline-flex items-center text-sm font-medium text-accent hover:text-app-sidebar"
             >
-              Open link
+              {getAssetAccessCopy(asset)}
             </a>
           ) : asset.storagePath ? (
             <p className="mt-3 text-sm font-medium text-ink-muted">
-              Stored in app: {asset.storagePath}
+              {getAssetAccessCopy(asset)}
             </p>
           ) : (
             <p className="mt-3 text-sm font-medium text-ink-muted">
-              Reference-only asset
+              {getAssetAccessCopy(asset)}
             </p>
           )}
         </article>

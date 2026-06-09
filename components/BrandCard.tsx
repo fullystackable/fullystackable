@@ -12,7 +12,11 @@ type BrandCardProps = {
 export function BrandCard({ brand }: BrandCardProps) {
   return (
     <Card className="transition hover:-translate-y-0.5 hover:shadow-app-soft">
-      <div className="flex flex-col gap-4">
+      <div
+        role="group"
+        aria-label={`Brand card for ${brand.name}`}
+        className="flex flex-col gap-4"
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
@@ -26,6 +30,11 @@ export function BrandCard({ brand }: BrandCardProps) {
         </div>
 
         <p className="text-sm leading-6 text-ink-muted">{brand.description}</p>
+        {brand.searchMatchReason ? (
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-accent">
+            {brand.searchMatchReason}
+          </p>
+        ) : null}
 
         <dl className="grid grid-cols-3 gap-3 border-t border-app-line pt-4">
           <div className="metric-tile border-t-0 pt-0">

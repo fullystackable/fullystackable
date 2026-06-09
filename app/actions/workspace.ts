@@ -144,6 +144,14 @@ export async function updateBrand(
   const description = getString(formData, "description");
   const status = getString(formData, "status") || "active";
   const notes = getString(formData, "notes");
+  const brandVoice = getString(formData, "brandVoice");
+  const commonCtas = getString(formData, "commonCtas");
+  const audienceNotes = getString(formData, "audienceNotes");
+  const servicesProducts = getString(formData, "servicesProducts");
+  const pricingNotes = getString(formData, "pricingNotes");
+  const positioningNotes = getString(formData, "positioningNotes");
+  const doDontList = getString(formData, "doDontList");
+  const referenceLinks = getString(formData, "referenceLinks");
 
   if (!brandId || !brandSlug) {
     return {
@@ -168,6 +176,14 @@ export async function updateBrand(
       description: description || null,
       status,
       notes: notes || null,
+      brand_voice: brandVoice || null,
+      common_ctas: commonCtas || null,
+      audience_notes: audienceNotes || null,
+      services_products: servicesProducts || null,
+      pricing_notes: pricingNotes || null,
+      positioning_notes: positioningNotes || null,
+      do_dont_list: doDontList || null,
+      reference_links: referenceLinks || null,
     })
     .eq("id", brandId);
 
@@ -336,6 +352,38 @@ export async function updateTask(
     success: true,
     message: "Task updated.",
   };
+}
+
+export async function updateTaskStatus(formData: FormData) {
+  const taskId = getString(formData, "taskId");
+  const brandSlug = getString(formData, "brandSlug");
+  const status = getString(formData, "status") || "planned";
+
+  if (!taskId || !brandSlug) {
+    throw new Error("Task context is missing.");
+  }
+
+  if (
+    !["planned", "in_progress", "needs_review", "done", "archived"].includes(
+      status,
+    )
+  ) {
+    throw new Error("Task status is invalid.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status })
+    .eq("id", taskId);
+
+  if (error) {
+    throw new Error(`Could not update task status: ${error.message}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
 }
 
 export async function createNote(
@@ -603,6 +651,7 @@ export async function createAsset(
   const brandSlug = getString(formData, "brandSlug");
   const relatedCampaignId = getString(formData, "relatedCampaignId");
   const title = getString(formData, "title");
+  const assetCategory = getString(formData, "assetCategory") || "other";
   const assetType = getString(formData, "assetType") || "other";
   const sourceType = getString(formData, "sourceType") || "reference";
   const url = getString(formData, "url");
@@ -623,6 +672,26 @@ export async function createAsset(
     return {
       success: false,
       message: "Asset title is required.",
+    };
+  }
+
+  if (
+    ![
+      "folder",
+      "canva",
+      "website_admin",
+      "social_profile",
+      "ad_platform",
+      "analytics",
+      "crm",
+      "document",
+      "creative_asset",
+      "other",
+    ].includes(assetCategory)
+  ) {
+    return {
+      success: false,
+      message: "Asset category is invalid.",
     };
   }
 
@@ -651,6 +720,7 @@ export async function createAsset(
     brand_id: brandId,
     related_campaign_id: relatedCampaignId || null,
     title,
+    asset_category: assetCategory,
     asset_type: assetType,
     source_type: sourceType,
     url: normalizedLocation.url,
@@ -685,6 +755,7 @@ export async function updateAsset(
   const brandSlug = getString(formData, "brandSlug");
   const relatedCampaignId = getString(formData, "relatedCampaignId");
   const title = getString(formData, "title");
+  const assetCategory = getString(formData, "assetCategory") || "other";
   const assetType = getString(formData, "assetType") || "other";
   const sourceType = getString(formData, "sourceType") || "reference";
   const url = getString(formData, "url");
@@ -705,6 +776,26 @@ export async function updateAsset(
     return {
       success: false,
       message: "Asset title is required.",
+    };
+  }
+
+  if (
+    ![
+      "folder",
+      "canva",
+      "website_admin",
+      "social_profile",
+      "ad_platform",
+      "analytics",
+      "crm",
+      "document",
+      "creative_asset",
+      "other",
+    ].includes(assetCategory)
+  ) {
+    return {
+      success: false,
+      message: "Asset category is invalid.",
     };
   }
 
@@ -734,6 +825,7 @@ export async function updateAsset(
     .update({
       related_campaign_id: relatedCampaignId || null,
       title,
+      asset_category: assetCategory,
       asset_type: assetType,
       source_type: sourceType,
       url: normalizedLocation.url,

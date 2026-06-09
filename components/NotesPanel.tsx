@@ -6,6 +6,7 @@ import { NoteEditForm } from "@/components/NoteEditForm";
 import { Badge, Card, EmptyState, SectionHeader } from "@/components/ui";
 import { formatShortDate } from "@/lib/date";
 import { brandStatusTones } from "@/lib/design";
+import type { WorkspaceNote } from "@/lib/workspace-view";
 
 type NoteItem = {
   id: string;
@@ -13,6 +14,7 @@ type NoteItem = {
   text: string;
   createdAt: string;
   category?: string;
+  categoryValue?: WorkspaceNote["categoryValue"];
   pinned?: boolean;
   brandId?: string;
   brandSlug?: string;
@@ -77,6 +79,7 @@ export function NotesPanel({
                             text: note.text,
                             createdAt: note.createdAt,
                             category: note.category ?? "Random",
+                            categoryValue: note.categoryValue,
                             pinned: note.pinned ?? false,
                           }}
                           brandSlug={brandSlug}

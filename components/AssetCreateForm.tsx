@@ -4,8 +4,8 @@ import { useActionState, useEffect, useRef } from "react";
 
 import { createAsset } from "@/app/actions/workspace";
 import { CampaignSelectField } from "@/components/CampaignSelectField";
-
 import { SubmitButton } from "@/components/SubmitButton";
+import { assetCategoryOptions } from "@/lib/assets";
 import type { WorkspaceCampaign } from "@/lib/workspace-view";
 
 const initialState = {
@@ -52,7 +52,22 @@ export function AssetCreateForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-ink">Asset type</span>
+          <span className="text-sm font-medium text-ink">Category</span>
+          <select
+            name="assetCategory"
+            defaultValue="document"
+            className="app-input"
+          >
+            {assetCategoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Asset detail type</span>
           <select name="assetType" defaultValue="document" className="app-input">
             <option value="logo">Logo</option>
             <option value="brand_guidelines">Brand Guidelines</option>
@@ -74,7 +89,9 @@ export function AssetCreateForm({
             <option value="other">Other</option>
           </select>
         </label>
+      </div>
 
+      <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Source mode</span>
           <select name="sourceType" defaultValue="external_url" className="app-input">

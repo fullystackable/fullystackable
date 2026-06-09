@@ -14,8 +14,8 @@ type NavItem = {
 const primaryNav: NavItem[] = [
   {
     label: "Dashboard",
-    href: "/",
-    match: (pathname) => pathname === "/",
+    href: "/dashboard",
+    match: (pathname) => pathname === "/" || pathname === "/dashboard",
   },
   {
     label: "Brands",
@@ -32,15 +32,15 @@ export function Sidebar() {
   const workspaceNav: NavItem[] = [
     {
       label: "Tasks",
-      href: isBrandWorkspace ? `${pathname}#tasks` : "/#tasks",
+      href: isBrandWorkspace ? `${pathname}#tasks` : "/dashboard#tasks",
     },
     {
       label: "Upcoming",
-      href: isBrandWorkspace ? `${pathname}#upcoming` : "/#upcoming",
+      href: isBrandWorkspace ? `${pathname}#upcoming` : "/dashboard#upcoming",
     },
     {
       label: "Assets",
-      href: isBrandWorkspace ? `${pathname}#assets` : "/brands#directory",
+      href: isBrandWorkspace ? `${pathname}#assets` : "/dashboard#assets",
     },
     {
       label: "Contacts",
@@ -48,7 +48,7 @@ export function Sidebar() {
     },
     {
       label: "Notes",
-      href: isBrandWorkspace ? `${pathname}#notes` : "/#notes",
+      href: isBrandWorkspace ? `${pathname}#notes` : "/dashboard#notes",
     },
   ];
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import type { WorkspaceDensity } from "@/lib/workspace-view";
+import { buildWorkspaceResetHref } from "@/lib/workspace-url-state";
+import type { TaskViewFilter, WorkspaceDensity } from "@/lib/workspace-view";
 
 type TaskSortOption = "due_asc" | "priority_desc" | "status" | "title";
 type AssetSortOption = "updated_desc" | "priority_desc" | "type" | "title";
@@ -10,28 +11,18 @@ type WorkspaceSortControlsProps = {
   brandSlug: string;
   activeCampaignId: string | null;
   taskSort: TaskSortOption;
+  taskView: TaskViewFilter;
   assetSort: AssetSortOption;
   upcomingSort: UpcomingSortOption;
   density: WorkspaceDensity;
   hasCustomSettings: boolean;
 };
 
-function buildResetHref(brandSlug: string, activeCampaignId: string | null) {
-  if (!activeCampaignId) {
-    return `/brands/${brandSlug}`;
-  }
-
-  const params = new URLSearchParams({
-    campaign: activeCampaignId,
-  });
-
-  return `/brands/${brandSlug}?${params.toString()}`;
-}
-
 export function WorkspaceSortControls({
   brandSlug,
   activeCampaignId,
   taskSort,
+  taskView,
   assetSort,
   upcomingSort,
   density,
@@ -63,14 +54,30 @@ export function WorkspaceSortControls({
             <input type="hidden" name="campaign" value={activeCampaignId} />
           ) : null}
 
-          <label className="space-y-2">
+          <label className="space-y-2 xl:col-span-2">
             <span className="text-sm font-medium text-ink">Tasks</span>
-            <select name="taskSort" defaultValue={taskSort} className="app-input">
-              <option value="due_asc">Due date</option>
-              <option value="priority_desc">Priority</option>
-              <option value="status">Status</option>
-              <option value="title">Title</option>
-            </select>
+            <div className="grid gap-4 md:grid-cols-2">
+              <select
+                name="taskSort"
+                aria-label="Task sort"
+                defaultValue={taskSort}
+                className="app-input"
+              >
+                <option value="due_asc">Due date</option>
+                <option value="priority_desc">Priority</option>
+                <option value="status">Status</option>
+                <option value="title">Title</option>
+              </select>
+              <select
+                name="taskView"
+                aria-label="Task view"
+                defaultValue={taskView}
+                className="app-input"
+              >
+                <option value="all">All tasks</option>
+                <option value="incomplete">Incomplete only</option>
+              </select>
+            </div>
           </label>
 
           <label className="space-y-2">
@@ -114,7 +121,7 @@ export function WorkspaceSortControls({
             </button>
             {hasCustomSettings ? (
               <Link
-                href={buildResetHref(brandSlug, activeCampaignId)}
+                href={buildWorkspaceResetHref(brandSlug, activeCampaignId)}
                 className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
               >
                 Reset

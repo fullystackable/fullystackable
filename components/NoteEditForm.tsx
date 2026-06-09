@@ -24,13 +24,23 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
 
   if (!isEditing) {
     return (
-      <button
-        type="button"
-        onClick={() => setIsEditing(true)}
-        className="text-sm font-medium text-ink-muted hover:text-ink"
-      >
-        Edit
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="text-sm font-medium text-ink-muted hover:text-ink"
+        >
+          Edit
+        </button>
+        {wasSuccessful && message ? (
+          <p
+            className="order-last basis-full text-sm text-success"
+            aria-live="polite"
+          >
+            {message}
+          </p>
+        ) : null}
+      </>
     );
   }
 
@@ -47,7 +57,7 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
   return (
     <form
       action={handleSubmit}
-      className="mt-4 space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
     >
       <input type="hidden" name="noteId" value={note.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -62,7 +72,7 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
           <span className="text-sm font-medium text-ink">Category</span>
           <select
             name="category"
-            defaultValue={note.category.toLowerCase().replace(/\s+/g, "_")}
+            defaultValue={note.categoryValue ?? "random"}
             className="app-input"
           >
             <option value="brand_voice">Brand voice</option>
@@ -108,9 +118,9 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
         <SubmitButton idleLabel="Save note" pendingLabel="Saving..." />
       </div>
 
-      {message ? (
+      {message && !wasSuccessful ? (
         <p
-          className={`text-sm ${wasSuccessful ? "text-success" : "text-danger"}`}
+          className="text-sm text-danger"
           aria-live="polite"
         >
           {message}

@@ -2,12 +2,13 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 
-import { getSupabasePublicConfig } from "@/lib/supabase/config";
+import { getSupabasePublicConfig, getSupabaseServerKey } from "@/lib/supabase/config";
 
 export function createSupabaseServerClient() {
-  const { url, publishableKey } = getSupabasePublicConfig();
+  const { url } = getSupabasePublicConfig();
+  const serverKey = getSupabaseServerKey();
 
-  return createClient(url, publishableKey, {
+  return createClient(url, serverKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

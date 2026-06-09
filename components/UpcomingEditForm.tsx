@@ -33,13 +33,23 @@ export function UpcomingEditForm({
 
   if (!isEditing) {
     return (
-      <button
-        type="button"
-        onClick={() => setIsEditing(true)}
-        className="text-sm font-medium text-ink-muted hover:text-ink"
-      >
-        Edit
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="text-sm font-medium text-ink-muted hover:text-ink"
+        >
+          Edit
+        </button>
+        {wasSuccessful && message ? (
+          <p
+            className="order-last basis-full text-sm text-success"
+            aria-live="polite"
+          >
+            {message}
+          </p>
+        ) : null}
+      </>
     );
   }
 
@@ -56,7 +66,7 @@ export function UpcomingEditForm({
   return (
     <form
       action={handleSubmit}
-      className="mt-4 space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
     >
       <input type="hidden" name="upcomingItemId" value={item.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -86,7 +96,7 @@ export function UpcomingEditForm({
           <span className="text-sm font-medium text-ink">Type</span>
           <select
             name="type"
-            defaultValue={item.type.toLowerCase().replace(/\s+/g, "_")}
+            defaultValue={item.typeValue}
             className="app-input"
           >
             <option value="meeting">Meeting</option>
@@ -101,7 +111,7 @@ export function UpcomingEditForm({
           <span className="text-sm font-medium text-ink">Status</span>
           <select
             name="status"
-            defaultValue={item.status.toLowerCase().replace(/\s+/g, "_")}
+            defaultValue={item.statusValue}
             className="app-input"
           >
             <option value="scheduled">Scheduled</option>
@@ -138,9 +148,9 @@ export function UpcomingEditForm({
         <SubmitButton idleLabel="Save item" pendingLabel="Saving..." />
       </div>
 
-      {message ? (
+      {message && !wasSuccessful ? (
         <p
-          className={`text-sm ${wasSuccessful ? "text-success" : "text-danger"}`}
+          className="text-sm text-danger"
           aria-live="polite"
         >
           {message}

@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { AssetList } from "@/components/AssetList";
 import { AssetCreateForm } from "@/components/AssetCreateForm";
 import { BrandEditForm } from "@/components/BrandEditForm";
+import { BrandProfilePanel } from "@/components/BrandProfilePanel";
+import { BrandSnapshotPanel } from "@/components/BrandSnapshotPanel";
 import { CampaignCreateForm } from "@/components/CampaignCreateForm";
 import { CampaignList } from "@/components/CampaignList";
 import { ContactCreateForm } from "@/components/ContactCreateForm";
@@ -15,14 +17,19 @@ import { UpcomingCreateForm } from "@/components/UpcomingCreateForm";
 import { UpcomingList } from "@/components/UpcomingList";
 import { WorkspaceCampaignFilter } from "@/components/WorkspaceCampaignFilter";
 import { WorkspaceSortControls } from "@/components/WorkspaceSortControls";
-import { Badge, Card, SectionHeader, cx } from "@/components/ui";
-import { brandStatusTones } from "@/lib/design";
-import type { BrandWorkspaceData, WorkspaceDensity } from "@/lib/workspace-view";
+import { Card, SectionHeader, cx } from "@/components/ui";
+import {
+  isTaskIncompleteStatus,
+  type BrandWorkspaceData,
+  type TaskViewFilter,
+  type WorkspaceDensity,
+} from "@/lib/workspace-view";
 
 type BrandWorkspaceProps = {
   brand: BrandWorkspaceData;
   activeCampaignId?: string | null;
   taskSort?: "due_asc" | "priority_desc" | "status" | "title";
+  taskView?: TaskViewFilter;
   assetSort?: "updated_desc" | "priority_desc" | "type" | "title";
   upcomingSort?: "date_asc" | "type" | "status" | "title";
   density?: WorkspaceDensity;
@@ -32,6 +39,7 @@ export function BrandWorkspace({
   brand,
   activeCampaignId = null,
   taskSort = "due_asc",
+  taskView = "all",
   assetSort = "updated_desc",
   upcomingSort = "date_asc",
   density = "comfortable",
@@ -42,13 +50,17 @@ export function BrandWorkspace({
   const filteredTasks = activeCampaign
     ? brand.tasks.filter((task) => task.relatedCampaignId === activeCampaign.id)
     : brand.tasks;
+  const taskPool =
+    taskView === "incomplete"
+      ? filteredTasks.filter((task) => isTaskIncompleteStatus(task.statusValue))
+      : filteredTasks;
   const filteredAssets = activeCampaign
     ? brand.assets.filter((asset) => asset.relatedCampaignId === activeCampaign.id)
     : brand.assets;
   const filteredUpcoming = activeCampaign
     ? brand.upcoming.filter((item) => item.relatedCampaignId === activeCampaign.id)
     : brand.upcoming;
-  const visibleTasks = [...filteredTasks].sort((left, right) => {
+  const visibleTasks = [...taskPool].sort((left, right) => {
     switch (taskSort) {
       case "priority_desc": {
         const priorityRank = {
@@ -117,9 +129,6 @@ export function BrandWorkspace({
         return left.date.localeCompare(right.date);
     }
   });
-  const openTasks = visibleTasks.filter(
-    (task) => task.status !== "Done" && task.status !== "Archived",
-  ).length;
   const campaignOptions = brand.campaigns.map((campaign) => ({
     id: campaign.id,
     title: campaign.title,
@@ -128,12 +137,52 @@ export function BrandWorkspace({
     taskSort !== "due_asc" ||
     assetSort !== "updated_desc" ||
     upcomingSort !== "date_asc";
-  const hasCustomSettings = hasCustomSorts || density !== "comfortable";
+  const hasCustomSettings =
+    hasCustomSorts || density !== "comfortable" || taskView !== "all";
   const topGridClass = isCompact
     ? "grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]"
     : "grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]";
   const sectionGridClass = isCompact ? "grid gap-4 xl:grid-cols-2" : "grid gap-6 xl:grid-cols-2";
   const stackClass = isCompact ? "space-y-4" : "space-y-6";
+  const taskSectionDescription = activeCampaign
+    ? `Campaign execution, approvals, and production milestones tied to ${activeCampaign.title}.`
+    : "Campaign execution, approvals, and production milestones.";
+  const taskSectionSummary =
+    taskView === "incomplete"
+      ? "Showing incomplete tasks only."
+      : "Showing all tasks.";
+  const assetSectionDescription = activeCampaign
+    ? `Metadata-first asset records linked to ${activeCampaign.title}.`
+    : "Metadata-first asset records for links, uploads, and references.";
+  const upcomingSectionDescription = activeCampaign
+    ? `Meetings, launches, deadlines, and reminders tied to ${activeCampaign.title}.`
+    : "Meetings, launches, deadlines, and moments to prepare for.";
+  const taskEmptyTitle = activeCampaign
+    ? taskView === "incomplete"
+      ? `No incomplete tasks for ${activeCampaign.title}`
+      : `No tasks for ${activeCampaign.title}`
+    : taskView === "incomplete"
+      ? "No incomplete tasks in this workspace"
+      : "No tasks in this workspace";
+  const taskEmptyDescription = activeCampaign
+    ? taskView === "incomplete"
+      ? "Every task in this focused campaign is done or archived. Switch back to all tasks if you want to review completed work."
+      : "This focused campaign does not have any tasks yet. Add one here to keep execution attached to the initiative."
+    : taskView === "incomplete"
+      ? "Everything currently visible here is already done or archived. Switch back to all tasks to review the full history."
+      : "As new campaign work, approvals, or production items are added, they will appear here.";
+  const assetEmptyTitle = activeCampaign
+    ? `No assets for ${activeCampaign.title}`
+    : "No assets yet";
+  const assetEmptyDescription = activeCampaign
+    ? "No asset records are tied to this campaign yet. Add one here to keep links, references, and placeholders together."
+    : "Creative files, reference documents, and working links will show up here when they are added.";
+  const upcomingEmptyTitle = activeCampaign
+    ? `Nothing upcoming for ${activeCampaign.title}`
+    : "Nothing upcoming";
+  const upcomingEmptyDescription = activeCampaign
+    ? "This campaign does not have any scheduled launches, meetings, or reminders yet."
+    : "Future launches, meetings, and checkpoints will show up here as they are scheduled.";
 
   return (
     <section
@@ -142,73 +191,37 @@ export function BrandWorkspace({
       )}
     >
       <div className={topGridClass}>
-        <Card>
-          <SectionHeader
-            eyebrow="Overview"
-            title="Brand snapshot"
-            description="A practical operating summary of the current brand status, workload, and core reference points."
-            action={<Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>}
-          />
-
-          <p className="mt-5 max-w-3xl text-sm leading-7 text-ink-muted sm:text-base">
-            {brand.description}
-          </p>
-
-          {brand.brandNotes ? (
-            <div className="mt-6 rounded-2xl border border-app-line bg-app-soft px-4 py-4">
-              <p className="text-sm font-semibold text-ink">Brand notes</p>
-              <p className="mt-2 text-sm leading-6 text-ink-muted">
-                {brand.brandNotes}
-              </p>
+        <div className={stackClass}>
+          <BrandSnapshotPanel brand={brand} />
+          <Card>
+            <SectionHeader
+              title="Brand settings"
+              description="Update the core brand record without leaving the workspace."
+            />
+            <div className="mt-6">
+              <BrandEditForm
+                brand={{
+                  id: brand.id,
+                  slug: brand.slug,
+                  name: brand.name,
+                  descriptionValue: brand.descriptionValue,
+                  website: brand.website,
+                  statusValue: brand.statusValue,
+                  brandNotes: brand.brandNotes,
+                  brandVoice: brand.brandVoice,
+                  commonCtas: brand.commonCtas,
+                  audienceNotes: brand.audienceNotes,
+                  servicesProducts: brand.servicesProducts,
+                  pricingNotes: brand.pricingNotes,
+                  positioningNotes: brand.positioningNotes,
+                  doDontList: brand.doDontList,
+                  referenceLinks: brand.referenceLinks,
+                }}
+                alwaysExpanded
+              />
             </div>
-          ) : null}
-
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="metric-tile">
-              <p className="text-xs uppercase tracking-[0.16em] text-ink-muted">
-                Website
-              </p>
-              {brand.website ? (
-                <a
-                  href={brand.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 inline-flex text-sm font-medium text-accent hover:text-app-sidebar"
-                >
-                  {brand.website}
-                </a>
-              ) : (
-                <p className="mt-3 text-sm text-ink-muted">No website added</p>
-              )}
-            </div>
-            <div className="metric-tile">
-              <p className="text-xs uppercase tracking-[0.16em] text-ink-muted">
-                Open tasks
-              </p>
-              <p className="mt-3 text-3xl font-semibold text-ink">{openTasks}</p>
-            </div>
-            <div className="metric-tile">
-              <p className="text-xs uppercase tracking-[0.16em] text-ink-muted">
-                Active contacts
-              </p>
-              <p className="mt-3 text-3xl font-semibold text-ink">
-                {brand.contacts.length}
-              </p>
-            </div>
-          </div>
-
-          <BrandEditForm
-            brand={{
-              id: brand.id,
-              slug: brand.slug,
-              name: brand.name,
-              descriptionValue: brand.descriptionValue,
-              website: brand.website,
-              statusValue: brand.statusValue,
-              brandNotes: brand.brandNotes,
-            }}
-          />
-        </Card>
+          </Card>
+        </div>
 
         <NotesPanel
           id="notes"
@@ -231,12 +244,15 @@ export function BrandWorkspace({
         />
       </div>
 
+      <BrandProfilePanel brand={brand} />
+
       <WorkspaceCampaignFilter
         brandSlug={brand.slug}
         campaigns={campaignOptions}
         activeCampaignId={activeCampaign?.id ?? null}
         activeCampaignTitle={activeCampaign?.title ?? null}
         taskSort={taskSort}
+        taskView={taskView}
         assetSort={assetSort}
         upcomingSort={upcomingSort}
         density={density}
@@ -249,6 +265,7 @@ export function BrandWorkspace({
         brandSlug={brand.slug}
         activeCampaignId={activeCampaign?.id ?? null}
         taskSort={taskSort}
+        taskView={taskView}
         assetSort={assetSort}
         upcomingSort={upcomingSort}
         density={density}
@@ -282,7 +299,7 @@ export function BrandWorkspace({
         <WorkspaceSection
           id="tasks"
           title="Tasks"
-          description="Campaign execution, approvals, and production milestones."
+          description={taskSectionDescription}
         >
           <div className={stackClass}>
             <div className="app-subtle-card p-4">
@@ -290,6 +307,7 @@ export function BrandWorkspace({
               <p className="mt-1 text-sm text-ink-muted">
                 Keep the workspace current with new execution items as they appear.
               </p>
+              <p className="mt-2 text-sm text-ink-muted">{taskSectionSummary}</p>
               <div className="mt-4">
                 <TaskCreateForm
                   brandId={brand.id}
@@ -303,13 +321,15 @@ export function BrandWorkspace({
               tasks={visibleTasks}
               brandSlug={brand.slug}
               campaigns={campaignOptions}
+              emptyTitle={taskEmptyTitle}
+              emptyDescription={taskEmptyDescription}
             />
           </div>
         </WorkspaceSection>
         <WorkspaceSection
           id="assets"
           title="Assets"
-          description="Metadata-first asset records for links, uploads, and references."
+          description={assetSectionDescription}
         >
           <div className={stackClass}>
             <div className="app-subtle-card p-4">
@@ -331,6 +351,8 @@ export function BrandWorkspace({
               campaigns={campaignOptions}
               brandSlug={brand.slug}
               allowDelete
+              emptyTitle={assetEmptyTitle}
+              emptyDescription={assetEmptyDescription}
             />
           </div>
         </WorkspaceSection>
@@ -359,7 +381,7 @@ export function BrandWorkspace({
         <WorkspaceSection
           id="upcoming"
           title="Upcoming"
-          description="Meetings, launches, deadlines, and moments to prepare for."
+          description={upcomingSectionDescription}
         >
           <div className={stackClass}>
             <div className="app-subtle-card p-4">
@@ -381,6 +403,8 @@ export function BrandWorkspace({
               campaigns={campaignOptions}
               brandSlug={brand.slug}
               allowDelete
+              emptyTitle={upcomingEmptyTitle}
+              emptyDescription={upcomingEmptyDescription}
             />
           </div>
         </WorkspaceSection>

@@ -76,3 +76,28 @@ export function getRelativeDateLabel(
 
   return `In ${daysUntil}d`;
 }
+
+export function getTaskDueDateLabel(
+  value: string | null,
+  baseDate: Date = new Date(),
+) {
+  if (!value) {
+    return "No due date";
+  }
+
+  const daysUntil = differenceInCalendarDays(value, baseDate);
+
+  if (daysUntil < 0) {
+    return "Overdue";
+  }
+
+  if (daysUntil === 0) {
+    return "Due today";
+  }
+
+  if (daysUntil <= 7) {
+    return "Due this week";
+  }
+
+  return "Upcoming";
+}

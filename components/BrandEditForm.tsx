@@ -20,19 +20,29 @@ type BrandEditFormProps = {
     website: string | null;
     statusValue: BrandStatusValue;
     brandNotes: string | null;
+    brandVoice?: string | null;
+    commonCtas?: string | null;
+    audienceNotes?: string | null;
+    servicesProducts?: string | null;
+    pricingNotes?: string | null;
+    positioningNotes?: string | null;
+    doDontList?: string | null;
+    referenceLinks?: string | null;
   };
   buttonLabel?: string;
+  alwaysExpanded?: boolean;
 };
 
 export function BrandEditForm({
   brand,
   buttonLabel = "Edit brand",
+  alwaysExpanded = false,
 }: BrandEditFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
 
-  if (!isEditing) {
+  if (!alwaysExpanded && !isEditing) {
     return (
       <button
         type="button"
@@ -49,7 +59,7 @@ export function BrandEditForm({
     setMessage(result.message);
     setWasSuccessful(result.success);
 
-    if (result.success) {
+    if (result.success && !alwaysExpanded) {
       setIsEditing(false);
     }
   }
@@ -119,14 +129,112 @@ export function BrandEditForm({
         />
       </label>
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Brand voice</span>
+          <textarea
+            name="brandVoice"
+            rows={4}
+            defaultValue={brand.brandVoice ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="Tone, style, personality, and how the brand should sound."
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Audience notes</span>
+          <textarea
+            name="audienceNotes"
+            rows={4}
+            defaultValue={brand.audienceNotes ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="Who this brand is speaking to and what matters to them."
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Common CTAs</span>
+          <textarea
+            name="commonCtas"
+            rows={4}
+            defaultValue={brand.commonCtas ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="Book now, Request a quote, Schedule a consult"
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Services / products</span>
+          <textarea
+            name="servicesProducts"
+            rows={4}
+            defaultValue={brand.servicesProducts ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="Main offers, product lines, or service categories."
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Pricing notes</span>
+          <textarea
+            name="pricingNotes"
+            rows={4}
+            defaultValue={brand.pricingNotes ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="Pricing ranges, package logic, objections, or caveats."
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Positioning notes</span>
+          <textarea
+            name="positioningNotes"
+            rows={4}
+            defaultValue={brand.positioningNotes ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="Differentiators, category framing, and market angle."
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Do / do not list</span>
+          <textarea
+            name="doDontList"
+            rows={5}
+            defaultValue={brand.doDontList ?? ""}
+            className="app-input min-h-32 resize-y"
+            placeholder="Use clear, direct language. Do not sound corporate or vague."
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Important links</span>
+          <textarea
+            name="referenceLinks"
+            rows={5}
+            defaultValue={brand.referenceLinks ?? ""}
+            className="app-input min-h-32 resize-y"
+            placeholder="One link per line: homepage, drive folder, guidelines, references"
+          />
+        </label>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => setIsEditing(false)}
-          className="text-sm font-medium text-ink-muted hover:text-ink"
-        >
-          Cancel
-        </button>
+        {alwaysExpanded ? (
+          <p className="text-sm text-ink-muted">
+            Update the brand record directly from this workspace.
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsEditing(false)}
+            className="text-sm font-medium text-ink-muted hover:text-ink"
+          >
+            Cancel
+          </button>
+        )}
         <SubmitButton idleLabel="Save brand" pendingLabel="Saving..." />
       </div>
 

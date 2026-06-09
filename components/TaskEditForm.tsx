@@ -30,13 +30,23 @@ export function TaskEditForm({
 
   if (!isEditing) {
     return (
-      <button
-        type="button"
-        onClick={() => setIsEditing(true)}
-        className="text-sm font-medium text-ink-muted hover:text-ink"
-      >
-        Edit
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="text-sm font-medium text-ink-muted hover:text-ink"
+        >
+          Edit
+        </button>
+        {wasSuccessful && message ? (
+          <p
+            className="order-last basis-full text-sm text-success"
+            aria-live="polite"
+          >
+            {message}
+          </p>
+        ) : null}
+      </>
     );
   }
 
@@ -53,7 +63,7 @@ export function TaskEditForm({
   return (
     <form
       action={handleSubmit}
-      className="mt-4 space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
     >
       <input type="hidden" name="taskId" value={task.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -83,7 +93,7 @@ export function TaskEditForm({
           <span className="text-sm font-medium text-ink">Status</span>
           <select
             name="status"
-            defaultValue={task.status.toLowerCase().replace(/\s+/g, "_")}
+            defaultValue={task.statusValue}
             className="app-input"
           >
             <option value="planned">Planned</option>
@@ -98,7 +108,7 @@ export function TaskEditForm({
           <span className="text-sm font-medium text-ink">Priority</span>
           <select
             name="priority"
-            defaultValue={task.priority.toLowerCase()}
+            defaultValue={task.priorityValue}
             className="app-input"
           >
             <option value="low">Low</option>
@@ -135,9 +145,9 @@ export function TaskEditForm({
         <SubmitButton idleLabel="Save task" pendingLabel="Saving..." />
       </div>
 
-      {message ? (
+      {message && !wasSuccessful ? (
         <p
-          className={`text-sm ${wasSuccessful ? "text-success" : "text-danger"}`}
+          className="text-sm text-danger"
           aria-live="polite"
         >
           {message}

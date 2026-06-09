@@ -29,7 +29,7 @@ export function BrandDirectoryFilters({
             name="q"
             defaultValue={query}
             className="app-input"
-            placeholder="Search name, description, website, or notes"
+            placeholder="Search brands, contacts, campaigns, assets, or notes"
           />
         </label>
 

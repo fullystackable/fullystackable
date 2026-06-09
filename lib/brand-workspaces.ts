@@ -28,6 +28,14 @@ type BrandRow = {
   website: string | null;
   status: "active" | "needs_attention" | "launching" | "archived";
   notes: string | null;
+  brand_voice: string | null;
+  common_ctas: string | null;
+  audience_notes: string | null;
+  services_products: string | null;
+  pricing_notes: string | null;
+  positioning_notes: string | null;
+  do_dont_list: string | null;
+  reference_links: string | null;
 };
 
 type TaskRow = {
@@ -46,6 +54,17 @@ type AssetRow = {
   brand_id: string;
   related_campaign_id: string | null;
   title: string;
+  asset_category:
+    | "folder"
+    | "canva"
+    | "website_admin"
+    | "social_profile"
+    | "ad_platform"
+    | "analytics"
+    | "crm"
+    | "document"
+    | "creative_asset"
+    | "other";
   asset_type:
     | "logo"
     | "brand_guidelines"
@@ -114,8 +133,14 @@ type UpcomingItemRow = {
   related_campaign_id: string | null;
   title: string;
   date: string;
-  type: string;
-  status: string;
+  type:
+    | "meeting"
+    | "event"
+    | "campaign_launch"
+    | "deadline"
+    | "reminder"
+    | "seasonal";
+  status: "scheduled" | "completed" | "canceled" | "postponed";
   notes: string | null;
 };
 
@@ -124,10 +149,25 @@ type NoteRow = {
   brand_id: string;
   title: string | null;
   body: string;
-  category: string;
+  category:
+    | "brand_voice"
+    | "audience"
+    | "cta"
+    | "pricing"
+    | "reminder"
+    | "strategy"
+    | "random";
   pinned: boolean;
   created_at: string;
 };
+
+type ContactSearchRow = Pick<ContactRow, "brand_id" | "name" | "email">;
+
+type CampaignSearchRow = Pick<CampaignRow, "brand_id" | "title">;
+
+type AssetSearchRow = Pick<AssetRow, "brand_id" | "title" | "url">;
+
+type NoteSearchRow = Pick<NoteRow, "brand_id" | "body">;
 
 function normalizeBrandDirectoryStatusFilter(
   value: string | null | undefined,
@@ -148,11 +188,136 @@ function normalizeBrandDirectoryStatusFilter(
   return "current";
 }
 
+function brandMatchesStatus(
+  brandStatus: BrandStatusValue,
+  filter: BrandDirectoryStatusFilter,
+) {
+  if (filter === "all") {
+    return true;
+  }
+
+  if (filter === "current") {
+    return brandStatus !== "archived";
+  }
+
+  return brandStatus === filter;
+}
+
+function includesNormalizedQuery(
+  value: string | null | undefined,
+  query: string,
+) {
+  return value?.toLowerCase().includes(query) ?? false;
+}
+
+function getBrandFieldMatchReason(brand: BrandRow, query: string) {
+  if (includesNormalizedQuery(brand.name, query)) {
+    return "Matched brand name";
+  }
+
+  if (includesNormalizedQuery(brand.description, query)) {
+    return "Matched description";
+  }
+
+  if (includesNormalizedQuery(brand.notes, query)) {
+    return "Matched brand notes";
+  }
+
+  if (includesNormalizedQuery(brand.website, query)) {
+    return "Matched website";
+  }
+
+  return null;
+}
+
+function addSearchMatchReason(
+  matchReasons: Map<string, string>,
+  brandId: string,
+  reason: string,
+) {
+  if (!matchReasons.has(brandId)) {
+    matchReasons.set(brandId, reason);
+  }
+}
+
+async function getRelatedBrandSearchMatches(
+  brandIds: string[],
+  normalizedQuery: string,
+) {
+  if (!normalizedQuery || brandIds.length === 0) {
+    return new Map<string, string>();
+  }
+
+  const supabase = createSupabaseServerClient();
+  const [contactsResult, campaignsResult, assetsResult, notesResult] =
+    await Promise.all([
+      supabase
+        .from("contacts")
+        .select("brand_id, name, email")
+        .in("brand_id", brandIds),
+      supabase.from("campaigns").select("brand_id, title").in("brand_id", brandIds),
+      supabase.from("assets").select("brand_id, title, url").in("brand_id", brandIds),
+      supabase.from("notes").select("brand_id, body").in("brand_id", brandIds),
+    ]);
+
+  if (contactsResult.error) {
+    throw new Error(`Failed to search contacts: ${contactsResult.error.message}`);
+  }
+
+  if (campaignsResult.error) {
+    throw new Error(`Failed to search campaigns: ${campaignsResult.error.message}`);
+  }
+
+  if (assetsResult.error) {
+    throw new Error(`Failed to search assets: ${assetsResult.error.message}`);
+  }
+
+  if (notesResult.error) {
+    throw new Error(`Failed to search notes: ${notesResult.error.message}`);
+  }
+
+  const matchReasons = new Map<string, string>();
+
+  for (const contact of (contactsResult.data ?? []) as ContactSearchRow[]) {
+    if (
+      includesNormalizedQuery(contact.name, normalizedQuery) ||
+      includesNormalizedQuery(contact.email, normalizedQuery)
+    ) {
+      addSearchMatchReason(matchReasons, contact.brand_id, "Matched contact");
+    }
+  }
+
+  for (const campaign of (campaignsResult.data ?? []) as CampaignSearchRow[]) {
+    if (includesNormalizedQuery(campaign.title, normalizedQuery)) {
+      addSearchMatchReason(matchReasons, campaign.brand_id, "Matched campaign");
+    }
+  }
+
+  for (const asset of (assetsResult.data ?? []) as AssetSearchRow[]) {
+    if (
+      includesNormalizedQuery(asset.title, normalizedQuery) ||
+      includesNormalizedQuery(asset.url, normalizedQuery)
+    ) {
+      addSearchMatchReason(matchReasons, asset.brand_id, "Matched asset");
+    }
+  }
+
+  for (const note of (notesResult.data ?? []) as NoteSearchRow[]) {
+    if (includesNormalizedQuery(note.body, normalizedQuery)) {
+      addSearchMatchReason(matchReasons, note.brand_id, "Matched note");
+    }
+  }
+
+  return matchReasons;
+}
+
 async function fetchBrands() {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("brands")
-    .select("id, slug, name, description, website, status, notes")
+    .select(
+      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links",
+    )
     .order("name");
 
   if (error) {
@@ -167,6 +332,7 @@ export async function getBrandDirectoryPageData(
 ) {
   const brands = await fetchBrands();
   const query = (filters.query ?? "").trim();
+  const normalizedQuery = query.toLowerCase();
   const status = normalizeBrandDirectoryStatusFilter(filters.status);
   const brandIds = brands.map((brand) => brand.id);
 
@@ -254,37 +420,50 @@ export async function getBrandDirectoryPageData(
       tasksCount: taskSummary?.tasksCount ?? 0,
       assetsCount: assetsCountByBrand.get(brand.id) ?? 0,
       urgentTasks: taskSummary?.urgentTasks ?? 0,
+      searchMatchReason: null,
     };
   });
 
   const currentBrandItems = directoryItems.filter(
     (brand) => brand.statusValue !== "archived",
   );
-  const normalizedQuery = query.toLowerCase();
-  const filteredBrands = directoryItems.filter((brand) => {
-    if (status === "current" && brand.statusValue === "archived") {
-      return false;
+  const statusScopedBrands = brands.filter((brand) =>
+    brandMatchesStatus(brand.status, status),
+  );
+  const searchMatchReasons = new Map<string, string>();
+
+  if (normalizedQuery) {
+    for (const brand of statusScopedBrands) {
+      const reason = getBrandFieldMatchReason(brand, normalizedQuery);
+
+      if (reason) {
+        addSearchMatchReason(searchMatchReasons, brand.id, reason);
+      }
     }
 
-    if (status !== "current" && status !== "all" && brand.statusValue !== status) {
-      return false;
+    const relatedSearchMatches = await getRelatedBrandSearchMatches(
+      statusScopedBrands.map((brand) => brand.id),
+      normalizedQuery,
+    );
+
+    for (const [brandId, reason] of relatedSearchMatches) {
+      addSearchMatchReason(searchMatchReasons, brandId, reason);
     }
+  }
 
-    if (!normalizedQuery) {
-      return true;
-    }
+  const filteredBrands = directoryItems
+    .filter((brand) => brandMatchesStatus(brand.statusValue, status))
+    .filter((brand) => {
+      if (!normalizedQuery) {
+        return true;
+      }
 
-    const haystack = [
-      brand.name,
-      brand.descriptionValue ?? "",
-      brand.website ?? "",
-      brand.brandNotes ?? "",
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(normalizedQuery);
-  });
+      return searchMatchReasons.has(brand.id);
+    })
+    .map((brand) => ({
+      ...brand,
+      searchMatchReason: searchMatchReasons.get(brand.id) ?? null,
+    }));
 
   return {
     brands: filteredBrands,
@@ -304,7 +483,9 @@ export async function getBrandWorkspaceBySlug(slug: string) {
   const supabase = createSupabaseServerClient();
   const brandResult = await supabase
     .from("brands")
-    .select("id, slug, name, description, website, status, notes")
+    .select(
+      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links",
+    )
     .eq("slug", slug)
     .maybeSingle();
 
@@ -335,7 +516,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
       supabase
         .from("assets")
         .select(
-          "id, brand_id, related_campaign_id, title, asset_type, source_type, status, priority, url, storage_path, description, notes, updated_at",
+          "id, brand_id, related_campaign_id, title, asset_category, asset_type, source_type, status, priority, url, storage_path, description, notes, updated_at",
         )
         .eq("brand_id", brand.id)
         .order("updated_at", { ascending: false }),
@@ -405,12 +586,22 @@ export async function getBrandWorkspaceBySlug(slug: string) {
     status: mapBrandStatus(brand.status),
     statusValue: brand.status,
     brandNotes: brand.notes,
+    brandVoice: brand.brand_voice,
+    commonCtas: brand.common_ctas,
+    audienceNotes: brand.audience_notes,
+    servicesProducts: brand.services_products,
+    pricingNotes: brand.pricing_notes,
+    positioningNotes: brand.positioning_notes,
+    doDontList: brand.do_dont_list,
+    referenceLinks: brand.reference_links,
     tasks: ((tasksResult.data ?? []) as TaskRow[]).map((task) => ({
       id: task.id,
       title: task.title,
       dueDate: task.due_date,
       status: mapTaskStatus(task.status),
+      statusValue: task.status,
       priority: mapTaskPriority(task.priority),
+      priorityValue: task.priority,
       notes: task.notes,
       relatedCampaignId: task.related_campaign_id,
       relatedCampaignTitle: task.related_campaign_id
@@ -424,6 +615,8 @@ export async function getBrandWorkspaceBySlug(slug: string) {
         ? campaignTitles.get(asset.related_campaign_id) ?? null
         : null,
       title: asset.title,
+      category: humanizeSnakeCase(asset.asset_category),
+      categoryValue: asset.asset_category,
       type: humanizeSnakeCase(asset.asset_type),
       typeValue: asset.asset_type as AssetRow["asset_type"],
       sourceType: humanizeSnakeCase(asset.source_type),
@@ -465,7 +658,9 @@ export async function getBrandWorkspaceBySlug(slug: string) {
       title: item.title,
       date: toISODateOnly(item.date) ?? item.date,
       type: humanizeSnakeCase(item.type),
+      typeValue: item.type,
       status: humanizeSnakeCase(item.status),
+      statusValue: item.status,
       notes: item.notes,
       relatedCampaignId: item.related_campaign_id,
       relatedCampaignTitle: item.related_campaign_id
@@ -478,6 +673,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
       text: note.body,
       createdAt: toISODateOnly(note.created_at) ?? note.created_at,
       category: humanizeSnakeCase(note.category),
+      categoryValue: note.category,
       pinned: note.pinned,
     })),
   } satisfies BrandWorkspaceData;

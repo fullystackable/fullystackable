@@ -12,6 +12,8 @@ type UpcomingListProps = {
   campaigns: Array<Pick<WorkspaceCampaign, "id" | "title">>;
   brandSlug?: string;
   allowDelete?: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
 };
 
 export function UpcomingList({
@@ -19,14 +21,11 @@ export function UpcomingList({
   campaigns,
   brandSlug,
   allowDelete = false,
+  emptyTitle = "Nothing upcoming",
+  emptyDescription = "Future launches, meetings, and checkpoints will show up here as they are scheduled.",
 }: UpcomingListProps) {
   if (items.length === 0) {
-    return (
-      <EmptyState
-        title="Nothing upcoming"
-        description="Future launches, meetings, and checkpoints will show up here as they are scheduled."
-      />
-    );
+    return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
 
   return (

@@ -1,7 +1,12 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui";
-import type { WorkspaceCampaign, WorkspaceDensity } from "@/lib/workspace-view";
+import { buildCampaignClearHref } from "@/lib/workspace-url-state";
+import type {
+  TaskViewFilter,
+  WorkspaceCampaign,
+  WorkspaceDensity,
+} from "@/lib/workspace-view";
 
 type WorkspaceCampaignFilterProps = {
   brandSlug: string;
@@ -9,6 +14,7 @@ type WorkspaceCampaignFilterProps = {
   activeCampaignId: string | null;
   activeCampaignTitle: string | null;
   taskSort: "due_asc" | "priority_desc" | "status" | "title";
+  taskView: TaskViewFilter;
   assetSort: "updated_desc" | "priority_desc" | "type" | "title";
   upcomingSort: "date_asc" | "type" | "status" | "title";
   density: WorkspaceDensity;
@@ -17,41 +23,13 @@ type WorkspaceCampaignFilterProps = {
   upcomingCount: number;
 };
 
-function buildClearHref(
-  brandSlug: string,
-  taskSort: "due_asc" | "priority_desc" | "status" | "title",
-  assetSort: "updated_desc" | "priority_desc" | "type" | "title",
-  upcomingSort: "date_asc" | "type" | "status" | "title",
-  density: WorkspaceDensity,
-) {
-  const params = new URLSearchParams();
-
-  if (taskSort !== "due_asc") {
-    params.set("taskSort", taskSort);
-  }
-
-  if (assetSort !== "updated_desc") {
-    params.set("assetSort", assetSort);
-  }
-
-  if (upcomingSort !== "date_asc") {
-    params.set("upcomingSort", upcomingSort);
-  }
-
-  if (density !== "comfortable") {
-    params.set("density", density);
-  }
-
-  const query = params.toString();
-  return query ? `/brands/${brandSlug}?${query}` : `/brands/${brandSlug}`;
-}
-
 export function WorkspaceCampaignFilter({
   brandSlug,
   campaigns,
   activeCampaignId,
   activeCampaignTitle,
   taskSort,
+  taskView,
   assetSort,
   upcomingSort,
   density,
@@ -91,6 +69,7 @@ export function WorkspaceCampaignFilter({
           className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]"
         >
           <input type="hidden" name="taskSort" value={taskSort} />
+          <input type="hidden" name="taskView" value={taskView} />
           <input type="hidden" name="assetSort" value={assetSort} />
           <input type="hidden" name="upcomingSort" value={upcomingSort} />
           <input type="hidden" name="density" value={density} />
@@ -120,9 +99,10 @@ export function WorkspaceCampaignFilter({
             </button>
             {activeCampaignId ? (
               <Link
-                href={buildClearHref(
+                href={buildCampaignClearHref(
                   brandSlug,
                   taskSort,
+                  taskView,
                   assetSort,
                   upcomingSort,
                   density,
