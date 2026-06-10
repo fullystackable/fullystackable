@@ -15,6 +15,7 @@ import type {
   GlobalDashboardData,
 } from "@/lib/dashboard-data";
 import { getDueDateTone, taskPriorityTones, taskStatusTones } from "@/lib/design";
+import { buildWorkspaceTaskHref } from "@/lib/workspace-url-state";
 
 type GlobalDashboardProps = {
   data: GlobalDashboardData;
@@ -238,7 +239,7 @@ function DashboardTaskItem({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/brands/${task.brandSlug}#tasks`}
+            href={buildWorkspaceTaskHref(task.brandSlug, task.relatedCampaignId)}
             className="text-base font-semibold text-ink hover:text-accent"
           >
             {task.title}

@@ -8,6 +8,7 @@ import {
 import {
   buildCampaignClearHref,
   buildWorkspaceResetHref,
+  buildWorkspaceTaskHref,
 } from "../../lib/workspace-url-state";
 
 const baseDate = new Date(2026, 5, 8);
@@ -83,5 +84,17 @@ describe("workspace URL state helpers", () => {
         "comfortable",
       ),
     ).toBe("/brands/acme");
+  });
+
+  it("opens task links in the incomplete tasks view", () => {
+    expect(buildWorkspaceTaskHref("acme", null)).toBe(
+      "/brands/acme?taskView=incomplete#tasks",
+    );
+  });
+
+  it("preserves campaign focus in task links", () => {
+    expect(buildWorkspaceTaskHref("acme", "campaign-123")).toBe(
+      "/brands/acme?campaign=campaign-123&taskView=incomplete#tasks",
+    );
   });
 });

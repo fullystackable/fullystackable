@@ -4,6 +4,17 @@ type TaskSortOption = "due_asc" | "priority_desc" | "status" | "title";
 type AssetSortOption = "updated_desc" | "priority_desc" | "type" | "title";
 type UpcomingSortOption = "date_asc" | "type" | "status" | "title";
 
+function buildWorkspaceHref(
+  brandSlug: string,
+  params: URLSearchParams,
+  hash?: string,
+) {
+  const query = params.toString();
+  const baseHref = query ? `/brands/${brandSlug}?${query}` : `/brands/${brandSlug}`;
+
+  return hash ? `${baseHref}${hash}` : baseHref;
+}
+
 export function buildWorkspaceResetHref(
   brandSlug: string,
   activeCampaignId: string | null,
@@ -14,8 +25,7 @@ export function buildWorkspaceResetHref(
     params.set("campaign", activeCampaignId);
   }
 
-  const query = params.toString();
-  return query ? `/brands/${brandSlug}?${query}` : `/brands/${brandSlug}`;
+  return buildWorkspaceHref(brandSlug, params);
 }
 
 export function buildCampaignClearHref(
@@ -48,6 +58,20 @@ export function buildCampaignClearHref(
     params.set("density", density);
   }
 
-  const query = params.toString();
-  return query ? `/brands/${brandSlug}?${query}` : `/brands/${brandSlug}`;
+  return buildWorkspaceHref(brandSlug, params);
+}
+
+export function buildWorkspaceTaskHref(
+  brandSlug: string,
+  activeCampaignId: string | null,
+) {
+  const params = new URLSearchParams();
+
+  if (activeCampaignId) {
+    params.set("campaign", activeCampaignId);
+  }
+
+  params.set("taskView", "incomplete");
+
+  return buildWorkspaceHref(brandSlug, params, "#tasks");
 }

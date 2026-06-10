@@ -29,6 +29,7 @@ type TaskRow = {
   due_date: string | null;
   status: "planned" | "in_progress" | "needs_review" | "done" | "archived";
   priority: "low" | "medium" | "high" | "urgent";
+  related_campaign_id: string | null;
 };
 
 type UpcomingRow = {
@@ -80,6 +81,7 @@ export type DashboardTaskWithBrand = {
   brandSlug: string;
   brandName: string;
   daysUntilDue: number;
+  relatedCampaignId: string | null;
 };
 
 export type DashboardUpcomingWithBrand = {
@@ -139,7 +141,7 @@ function truncateText(value: string, maxLength: number) {
     return value;
   }
 
-  return `${value.slice(0, maxLength - 1).trimEnd()}…`;
+  return `${value.slice(0, maxLength - 1).trimEnd()}\u2026`;
 }
 
 function buildBrandLookup(brands: BrandRow[]) {
@@ -174,7 +176,7 @@ export async function getGlobalDashboardData(
       .order("name"),
     supabase
       .from("tasks")
-      .select("id, brand_id, title, due_date, status, priority")
+      .select("id, brand_id, title, due_date, status, priority, related_campaign_id")
       .neq("status", "archived"),
     supabase
       .from("upcoming_items")
@@ -251,6 +253,7 @@ export async function getGlobalDashboardData(
         brandSlug: brand.slug,
         brandName: brand.name,
         daysUntilDue: differenceInCalendarDays(dueDate, baseDate),
+        relatedCampaignId: task.related_campaign_id,
       };
     })
     .filter((task): task is DashboardTaskWithBrand => task !== null)

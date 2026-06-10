@@ -23,9 +23,9 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_TEST_BASE_URL
     ? undefined
     : {
-        command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+        command: `node tests/e2e/start-prod-server.cjs`,
         url: baseURL,
         reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
+        timeout: 240_000,
       },
 });
