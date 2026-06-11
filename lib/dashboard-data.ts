@@ -20,6 +20,7 @@ type BrandRow = {
   slug: string;
   name: string;
   status: "active" | "needs_attention" | "launching" | "archived";
+  brand_color: string | null;
 };
 
 type TaskRow = {
@@ -70,6 +71,7 @@ type BrandLookup = {
   slug: string;
   name: string;
   status: ReturnType<typeof mapBrandStatus>;
+  brandColor: string;
 };
 
 export type DashboardTaskWithBrand = {
@@ -92,6 +94,7 @@ export type DashboardUpcomingWithBrand = {
   status: string;
   brandSlug: string;
   brandName: string;
+  brandColor: string;
   daysUntil: number;
 };
 
@@ -152,6 +155,7 @@ function buildBrandLookup(brands: BrandRow[]) {
         slug: brand.slug,
         name: brand.name,
         status: mapBrandStatus(brand.status),
+        brandColor: brand.brand_color ?? "#0F766E",
       },
     ]),
   );
@@ -171,7 +175,7 @@ export async function getGlobalDashboardData(
   ] = await Promise.all([
     supabase
       .from("brands")
-      .select("id, slug, name, status")
+      .select("id, slug, name, status, brand_color")
       .neq("status", "archived")
       .order("name"),
     supabase
@@ -288,6 +292,7 @@ export async function getGlobalDashboardData(
         status: humanizeSnakeCase(item.status),
         brandSlug: brand.slug,
         brandName: brand.name,
+        brandColor: brand.brandColor,
         daysUntil: differenceInCalendarDays(date, baseDate),
       };
     })

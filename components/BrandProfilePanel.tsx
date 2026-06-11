@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+import { BrandColorBadge } from "@/components/BrandColorBadge";
+import { BrandEditForm } from "@/components/BrandEditForm";
+import { ExpandablePanel } from "@/components/ExpandablePanel";
 import { Card, EmptyState, SectionHeader } from "@/components/ui";
 import type { BrandWorkspaceData } from "@/lib/workspace-view";
 
@@ -16,6 +19,11 @@ type ProfileField = {
 
 export function BrandProfilePanel({ brand }: BrandProfilePanelProps) {
   const fields: ProfileField[] = [
+    {
+      label: "Workspace color",
+      value: brand.brandColor,
+      render: (value) => <BrandColorBadge color={value} label={value} />,
+    },
     {
       label: "Brand voice",
       value: brand.brandVoice,
@@ -66,15 +74,45 @@ export function BrandProfilePanel({ brand }: BrandProfilePanelProps) {
   const visibleFields = fields.filter((field) => field.value?.trim());
 
   return (
-    <Card>
+    <Card id="profile">
       <SectionHeader
         eyebrow="Profile"
         title="Brand profile"
-        description="Reference details that keep positioning, messaging, offers, and links close to the work."
+        description="Reference details stay close to the work, while rare settings changes stay tucked away."
+        compact
       />
       <div className="mt-6">
+        <ExpandablePanel
+          title="Brand settings"
+          description="Open the full brand record only when you actually need to change the long-term setup."
+          buttonLabel="Edit brand settings"
+        >
+          <BrandEditForm
+            brand={{
+              id: brand.id,
+              slug: brand.slug,
+              name: brand.name,
+              brandColor: brand.brandColor,
+              descriptionValue: brand.descriptionValue,
+              website: brand.website,
+              statusValue: brand.statusValue,
+              brandNotes: brand.brandNotes,
+              brandVoice: brand.brandVoice,
+              commonCtas: brand.commonCtas,
+              audienceNotes: brand.audienceNotes,
+              servicesProducts: brand.servicesProducts,
+              pricingNotes: brand.pricingNotes,
+              positioningNotes: brand.positioningNotes,
+              doDontList: brand.doDontList,
+              referenceLinks: brand.referenceLinks,
+            }}
+            alwaysExpanded
+            framed={false}
+          />
+        </ExpandablePanel>
+
         {visibleFields.length > 0 ? (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="mt-5 grid gap-4 xl:grid-cols-2">
             {visibleFields.map((field) => (
               <article
                 key={field.label}
@@ -90,10 +128,12 @@ export function BrandProfilePanel({ brand }: BrandProfilePanelProps) {
             ))}
           </div>
         ) : (
-          <EmptyState
-            title="No profile details yet"
-            description="Add brand voice, audience, pricing, positioning, and reference links in Brand settings to make this workspace more useful."
-          />
+          <div className="mt-5">
+            <EmptyState
+              title="No profile details yet"
+              description="Add brand voice, audience, pricing, positioning, and reference links in Brand settings to make this workspace more useful."
+            />
+          </div>
         )}
       </div>
     </Card>

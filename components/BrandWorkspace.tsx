@@ -1,23 +1,27 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { AssetList } from "@/components/AssetList";
 import { AssetCreateForm } from "@/components/AssetCreateForm";
-import { BrandEditForm } from "@/components/BrandEditForm";
+import { AssetList } from "@/components/AssetList";
 import { BrandProfilePanel } from "@/components/BrandProfilePanel";
 import { BrandSnapshotPanel } from "@/components/BrandSnapshotPanel";
 import { CampaignCreateForm } from "@/components/CampaignCreateForm";
 import { CampaignList } from "@/components/CampaignList";
 import { ContactCreateForm } from "@/components/ContactCreateForm";
 import { ContactList } from "@/components/ContactList";
+import { ExpandablePanel } from "@/components/ExpandablePanel";
 import { NoteCreateForm } from "@/components/NoteCreateForm";
 import { NotesPanel } from "@/components/NotesPanel";
-import { TaskList } from "@/components/TaskList";
 import { TaskCreateForm } from "@/components/TaskCreateForm";
+import { TaskList } from "@/components/TaskList";
 import { UpcomingCreateForm } from "@/components/UpcomingCreateForm";
 import { UpcomingList } from "@/components/UpcomingList";
-import { WorkspaceCampaignFilter } from "@/components/WorkspaceCampaignFilter";
-import { WorkspaceSortControls } from "@/components/WorkspaceSortControls";
-import { Card, SectionHeader, cx } from "@/components/ui";
+import { Badge, Card, SectionHeader, cx } from "@/components/ui";
+import { WorkspaceControlBar } from "@/components/WorkspaceControlBar";
+import {
+  buildWorkspaceViewHref,
+  type WorkspaceTab,
+} from "@/lib/workspace-url-state";
 import {
   isTaskIncompleteStatus,
   type BrandWorkspaceData,
@@ -33,6 +37,13 @@ type BrandWorkspaceProps = {
   assetSort?: "updated_desc" | "priority_desc" | "type" | "title";
   upcomingSort?: "date_asc" | "type" | "status" | "title";
   density?: WorkspaceDensity;
+  activeTab?: WorkspaceTab;
+};
+
+type WorkspaceTabConfig = {
+  id: WorkspaceTab;
+  label: string;
+  count?: number;
 };
 
 export function BrandWorkspace({
@@ -43,6 +54,7 @@ export function BrandWorkspace({
   assetSort = "updated_desc",
   upcomingSort = "date_asc",
   density = "comfortable",
+  activeTab = "tasks",
 }: BrandWorkspaceProps) {
   const isCompact = density === "compact";
   const activeCampaign =
@@ -139,11 +151,8 @@ export function BrandWorkspace({
     upcomingSort !== "date_asc";
   const hasCustomSettings =
     hasCustomSorts || density !== "comfortable" || taskView !== "all";
-  const topGridClass = isCompact
-    ? "grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]"
-    : "grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]";
-  const sectionGridClass = isCompact ? "grid gap-4 xl:grid-cols-2" : "grid gap-6 xl:grid-cols-2";
-  const stackClass = isCompact ? "space-y-4" : "space-y-6";
+  const sectionGridClass = isCompact ? "grid gap-4 xl:grid-cols-2" : "grid gap-5 xl:grid-cols-2";
+  const stackClass = isCompact ? "space-y-4" : "space-y-5";
   const taskSectionDescription = activeCampaign
     ? `Campaign execution, approvals, and production milestones tied to ${activeCampaign.title}.`
     : "Campaign execution, approvals, and production milestones.";
@@ -183,70 +192,24 @@ export function BrandWorkspace({
   const upcomingEmptyDescription = activeCampaign
     ? "This campaign does not have any scheduled launches, meetings, or reminders yet."
     : "Future launches, meetings, and checkpoints will show up here as they are scheduled.";
+  const tabs: WorkspaceTabConfig[] = [
+    { id: "tasks", label: "Tasks", count: visibleTasks.length },
+    { id: "upcoming", label: "Upcoming", count: visibleUpcoming.length },
+    { id: "assets", label: "Assets", count: visibleAssets.length },
+    { id: "contacts", label: "Contacts", count: brand.contacts.length },
+    { id: "notes", label: "Notes", count: brand.notes.length },
+    { id: "profile", label: "Profile" },
+  ];
 
   return (
     <section
       className={cx(
-        isCompact ? "workspace-density-compact space-y-4" : "space-y-6",
+        isCompact ? "workspace-density-compact space-y-4" : "space-y-5",
       )}
     >
-      <div className={topGridClass}>
-        <div className={stackClass}>
-          <BrandSnapshotPanel brand={brand} />
-          <Card>
-            <SectionHeader
-              title="Brand settings"
-              description="Update the core brand record without leaving the workspace."
-            />
-            <div className="mt-6">
-              <BrandEditForm
-                brand={{
-                  id: brand.id,
-                  slug: brand.slug,
-                  name: brand.name,
-                  descriptionValue: brand.descriptionValue,
-                  website: brand.website,
-                  statusValue: brand.statusValue,
-                  brandNotes: brand.brandNotes,
-                  brandVoice: brand.brandVoice,
-                  commonCtas: brand.commonCtas,
-                  audienceNotes: brand.audienceNotes,
-                  servicesProducts: brand.servicesProducts,
-                  pricingNotes: brand.pricingNotes,
-                  positioningNotes: brand.positioningNotes,
-                  doDontList: brand.doDontList,
-                  referenceLinks: brand.referenceLinks,
-                }}
-                alwaysExpanded
-              />
-            </div>
-          </Card>
-        </div>
+      <BrandSnapshotPanel brand={brand} />
 
-        <NotesPanel
-          id="notes"
-          title="Working notes"
-          description="Recent reminders and operating context for this brand."
-          notes={brand.notes}
-          brandSlug={brand.slug}
-          allowDelete
-          beforeList={
-            <div className="app-subtle-card p-4">
-              <p className="text-sm font-semibold text-ink">Add a note</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Capture brand voice, reminders, and operating context while it is fresh.
-              </p>
-              <div className="mt-4">
-                <NoteCreateForm brandId={brand.id} brandSlug={brand.slug} />
-              </div>
-            </div>
-          }
-        />
-      </div>
-
-      <BrandProfilePanel brand={brand} />
-
-      <WorkspaceCampaignFilter
+      <WorkspaceControlBar
         brandSlug={brand.slug}
         campaigns={campaignOptions}
         activeCampaignId={activeCampaign?.id ?? null}
@@ -256,148 +219,137 @@ export function BrandWorkspace({
         assetSort={assetSort}
         upcomingSort={upcomingSort}
         density={density}
+        hasCustomSettings={hasCustomSettings}
         tasksCount={visibleTasks.length}
         assetsCount={visibleAssets.length}
         upcomingCount={visibleUpcoming.length}
+        activeTab={activeTab}
       />
 
-      <WorkspaceSortControls
-        brandSlug={brand.slug}
-        activeCampaignId={activeCampaign?.id ?? null}
-        taskSort={taskSort}
-        taskView={taskView}
-        assetSort={assetSort}
-        upcomingSort={upcomingSort}
-        density={density}
-        hasCustomSettings={hasCustomSettings}
-      />
+      <nav aria-label="Workspace sections" className="overflow-x-auto">
+        <div className="flex min-w-max gap-2 rounded-2xl border border-app-line bg-white/80 p-2">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
 
-      <div className={sectionGridClass}>
-        <WorkspaceSection
-          id="campaigns"
-          title="Campaigns"
-          description="The brand's active pushes, launch windows, and initiative-level context."
-        >
-          <div className={stackClass}>
-            <div className="app-subtle-card p-4">
-              <p className="text-sm font-semibold text-ink">Add a campaign</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Group related work under a shared initiative before you start tying tasks and assets to it.
-              </p>
-              <div className="mt-4">
+            return (
+              <Link
+                key={tab.id}
+                href={buildWorkspaceViewHref(brand.slug, {
+                  activeCampaignId: activeCampaign?.id ?? null,
+                  taskSort,
+                  taskView,
+                  assetSort,
+                  upcomingSort,
+                  density,
+                  tab: tab.id,
+                })}
+                className={cx(
+                  "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
+                  isActive
+                    ? "bg-app-sidebar text-white shadow-app-soft"
+                    : "text-ink-muted hover:bg-app-soft hover:text-ink",
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <span>{tab.label}</span>
+                {typeof tab.count === "number" ? (
+                  <span
+                    className={cx(
+                      "rounded-full px-2 py-0.5 text-xs font-semibold",
+                      isActive ? "bg-white/14 text-white" : "bg-app-soft text-ink",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {activeTab === "tasks" ? (
+        <div className={sectionGridClass}>
+          <WorkspaceSection
+            id="campaigns"
+            title="Campaigns"
+            description="The brand's active pushes, launch windows, and initiative-level context."
+            action={
+              <Badge>{brand.campaigns.length} campaign{brand.campaigns.length === 1 ? "" : "s"}</Badge>
+            }
+          >
+            <div className={stackClass}>
+              <ExpandablePanel
+                title="Add a campaign"
+                description="Group related work under one initiative before you start tying tasks and assets to it."
+                buttonLabel="New campaign"
+              >
                 <CampaignCreateForm brandId={brand.id} brandSlug={brand.slug} />
-              </div>
+              </ExpandablePanel>
+              <CampaignList
+                campaigns={brand.campaigns}
+                brandSlug={brand.slug}
+                allowDelete
+                activeCampaignId={activeCampaign?.id ?? null}
+              />
             </div>
-            <CampaignList
-              campaigns={brand.campaigns}
-              brandSlug={brand.slug}
-              allowDelete
-              activeCampaignId={activeCampaign?.id ?? null}
-            />
-          </div>
-        </WorkspaceSection>
-        <WorkspaceSection
-          id="tasks"
-          title="Tasks"
-          description={taskSectionDescription}
-        >
-          <div className={stackClass}>
-            <div className="app-subtle-card p-4">
-              <p className="text-sm font-semibold text-ink">Add a task</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Keep the workspace current with new execution items as they appear.
-              </p>
-              <p className="mt-2 text-sm text-ink-muted">{taskSectionSummary}</p>
-              <div className="mt-4">
+          </WorkspaceSection>
+          <WorkspaceSection
+            id="tasks"
+            title="Tasks"
+            description={taskSectionDescription}
+            action={
+              <div className="flex flex-wrap gap-2">
+                <Badge>{visibleTasks.length} visible</Badge>
+                {taskView === "incomplete" ? <Badge tone="accent">Incomplete only</Badge> : null}
+              </div>
+            }
+          >
+            <div className={stackClass}>
+              <ExpandablePanel
+                title="Add a task"
+                description={`Keep the workspace current with new execution items as they appear. ${taskSectionSummary}`}
+                buttonLabel="New task"
+              >
                 <TaskCreateForm
                   brandId={brand.id}
                   brandSlug={brand.slug}
                   campaigns={campaignOptions}
                   defaultCampaignId={activeCampaign?.id ?? null}
                 />
-              </div>
+              </ExpandablePanel>
+              <TaskList
+                tasks={visibleTasks}
+                brandSlug={brand.slug}
+                campaigns={campaignOptions}
+                emptyTitle={taskEmptyTitle}
+                emptyDescription={taskEmptyDescription}
+              />
             </div>
-            <TaskList
-              tasks={visibleTasks}
-              brandSlug={brand.slug}
-              campaigns={campaignOptions}
-              emptyTitle={taskEmptyTitle}
-              emptyDescription={taskEmptyDescription}
-            />
-          </div>
-        </WorkspaceSection>
-        <WorkspaceSection
-          id="assets"
-          title="Assets"
-          description={assetSectionDescription}
-        >
-          <div className={stackClass}>
-            <div className="app-subtle-card p-4">
-              <p className="text-sm font-semibold text-ink">Add an asset</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Start with the record. Link the external source or save the intended storage path, then organize the work around it.
-              </p>
-              <div className="mt-4">
-                <AssetCreateForm
-                  brandId={brand.id}
-                  brandSlug={brand.slug}
-                  campaigns={campaignOptions}
-                  defaultCampaignId={activeCampaign?.id ?? null}
-                />
-              </div>
-            </div>
-            <AssetList
-              assets={visibleAssets}
-              campaigns={campaignOptions}
-              brandSlug={brand.slug}
-              allowDelete
-              emptyTitle={assetEmptyTitle}
-              emptyDescription={assetEmptyDescription}
-            />
-          </div>
-        </WorkspaceSection>
-        <WorkspaceSection
-          id="contacts"
-          title="Contacts"
-          description="Core client and partner relationships for fast follow-up."
-        >
-          <div className={stackClass}>
-            <div className="app-subtle-card p-4">
-              <p className="text-sm font-semibold text-ink">Add a contact</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Keep the key people around this brand close to the work.
-              </p>
-              <div className="mt-4">
-                <ContactCreateForm brandId={brand.id} brandSlug={brand.slug} />
-              </div>
-            </div>
-            <ContactList
-              contacts={brand.contacts}
-              brandSlug={brand.slug}
-              allowDelete
-            />
-          </div>
-        </WorkspaceSection>
+          </WorkspaceSection>
+        </div>
+      ) : null}
+
+      {activeTab === "upcoming" ? (
         <WorkspaceSection
           id="upcoming"
           title="Upcoming"
           description={upcomingSectionDescription}
+          action={<Badge>{visibleUpcoming.length} visible</Badge>}
         >
           <div className={stackClass}>
-            <div className="app-subtle-card p-4">
-              <p className="text-sm font-semibold text-ink">Add an upcoming item</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Keep launches, deadlines, meetings, and reminders visible in the workspace timeline.
-              </p>
-              <div className="mt-4">
-                <UpcomingCreateForm
-                  brandId={brand.id}
-                  brandSlug={brand.slug}
-                  campaigns={campaignOptions}
-                  defaultCampaignId={activeCampaign?.id ?? null}
-                />
-              </div>
-            </div>
+            <ExpandablePanel
+              title="Add an upcoming item"
+              description="Keep launches, deadlines, meetings, and reminders visible without leaving the workspace."
+              buttonLabel="New upcoming item"
+            >
+              <UpcomingCreateForm
+                brandId={brand.id}
+                brandSlug={brand.slug}
+                campaigns={campaignOptions}
+                defaultCampaignId={activeCampaign?.id ?? null}
+              />
+            </ExpandablePanel>
             <UpcomingList
               items={visibleUpcoming}
               campaigns={campaignOptions}
@@ -408,7 +360,85 @@ export function BrandWorkspace({
             />
           </div>
         </WorkspaceSection>
-      </div>
+      ) : null}
+
+      {activeTab === "assets" ? (
+        <WorkspaceSection
+          id="assets"
+          title="Assets"
+          description={assetSectionDescription}
+          action={<Badge>{visibleAssets.length} visible</Badge>}
+        >
+          <div className={stackClass}>
+            <ExpandablePanel
+              title="Add an asset"
+              description="Start with the record, then attach links, storage paths, and notes around the work."
+              buttonLabel="New asset"
+            >
+              <AssetCreateForm
+                brandId={brand.id}
+                brandSlug={brand.slug}
+                campaigns={campaignOptions}
+                defaultCampaignId={activeCampaign?.id ?? null}
+              />
+            </ExpandablePanel>
+            <AssetList
+              assets={visibleAssets}
+              campaigns={campaignOptions}
+              brandSlug={brand.slug}
+              allowDelete
+              emptyTitle={assetEmptyTitle}
+              emptyDescription={assetEmptyDescription}
+            />
+          </div>
+        </WorkspaceSection>
+      ) : null}
+
+      {activeTab === "contacts" ? (
+        <WorkspaceSection
+          id="contacts"
+          title="Contacts"
+          description="Core client and partner relationships for fast follow-up."
+          action={<Badge>{brand.contacts.length} total</Badge>}
+        >
+          <div className={stackClass}>
+            <ExpandablePanel
+              title="Add a contact"
+              description="Keep the key people around this brand close to the work."
+              buttonLabel="New contact"
+            >
+              <ContactCreateForm brandId={brand.id} brandSlug={brand.slug} />
+            </ExpandablePanel>
+            <ContactList
+              contacts={brand.contacts}
+              brandSlug={brand.slug}
+              allowDelete
+            />
+          </div>
+        </WorkspaceSection>
+      ) : null}
+
+      {activeTab === "notes" ? (
+        <NotesPanel
+          id="notes"
+          title="Working notes"
+          description="Recent reminders and operating context for this brand."
+          notes={brand.notes}
+          brandSlug={brand.slug}
+          allowDelete
+          beforeList={
+            <ExpandablePanel
+              title="Add a note"
+              description="Capture brand voice, reminders, and operating context while it is fresh."
+              buttonLabel="New note"
+            >
+              <NoteCreateForm brandId={brand.id} brandSlug={brand.slug} />
+            </ExpandablePanel>
+          }
+        />
+      ) : null}
+
+      {activeTab === "profile" ? <BrandProfilePanel brand={brand} /> : null}
     </section>
   );
 }
@@ -417,6 +447,7 @@ type WorkspaceSectionProps = {
   id?: string;
   title: string;
   description: string;
+  action?: ReactNode;
   children: ReactNode;
 };
 
@@ -424,12 +455,18 @@ function WorkspaceSection({
   id,
   title,
   description,
+  action,
   children,
 }: WorkspaceSectionProps) {
   return (
     <Card id={id}>
-      <SectionHeader title={title} description={description} />
-      <div className="mt-6">{children}</div>
+      <SectionHeader
+        title={title}
+        description={description}
+        action={action}
+        compact
+      />
+      <div className="mt-5">{children}</div>
     </Card>
   );
 }

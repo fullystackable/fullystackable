@@ -97,15 +97,15 @@ select {
 
 .app-card {
   border: 1px solid var(--app-border);
-  border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: var(--app-shadow);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .app-subtle-card {
   border: 1px solid var(--app-border);
-  border-radius: 1.1rem;
-  background: var(--app-surface-muted);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(239, 244, 242, 0.9), rgba(248, 251, 250, 0.96));
 }
 
 .metric-tile {
@@ -121,9 +121,9 @@ select {
 
 .data-row {
   border: 1px solid var(--app-border);
-  border-radius: 1rem;
-  background: var(--app-surface-soft);
-  padding: 1rem;
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.95rem;
 }
 
 .workspace-density-compact .app-card {

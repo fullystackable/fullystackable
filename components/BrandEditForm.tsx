@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { updateBrand } from "@/app/actions/workspace";
+import { BrandColorField } from "@/components/BrandColorField";
 import { SubmitButton } from "@/components/SubmitButton";
 import type { BrandStatusValue } from "@/lib/workspace-view";
 
@@ -16,6 +17,7 @@ type BrandEditFormProps = {
     id: string;
     slug: string;
     name: string;
+    brandColor: string;
     descriptionValue: string | null;
     website: string | null;
     statusValue: BrandStatusValue;
@@ -31,12 +33,14 @@ type BrandEditFormProps = {
   };
   buttonLabel?: string;
   alwaysExpanded?: boolean;
+  framed?: boolean;
 };
 
 export function BrandEditForm({
   brand,
   buttonLabel = "Edit brand",
   alwaysExpanded = false,
+  framed = true,
 }: BrandEditFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
@@ -67,7 +71,9 @@ export function BrandEditForm({
   return (
     <form
       action={handleSubmit}
-      className="mt-6 space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className={`space-y-4 ${
+        framed ? "rounded-2xl border border-app-line bg-white/90 p-4" : ""
+      }`}
     >
       <input type="hidden" name="brandId" value={brand.id} />
       <input type="hidden" name="brandSlug" value={brand.slug} />
@@ -107,6 +113,11 @@ export function BrandEditForm({
           <option value="archived">Archived</option>
         </select>
       </label>
+
+      <BrandColorField
+        name="brandColor"
+        defaultValue={brand.brandColor}
+      />
 
       <label className="space-y-2">
         <span className="text-sm font-medium text-ink">Description</span>

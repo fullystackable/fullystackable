@@ -1,7 +1,10 @@
+import Link from "next/link";
+
 import { deleteCampaign } from "@/app/actions/workspace";
 import { CampaignEditForm } from "@/components/CampaignEditForm";
 import { Badge, EmptyState } from "@/components/ui";
 import { formatShortDate } from "@/lib/date";
+import { buildCampaignWorkspaceHref } from "@/lib/workspace-url-state";
 import type { WorkspaceCampaign } from "@/lib/workspace-view";
 
 type CampaignListProps = {
@@ -32,7 +35,18 @@ export function CampaignList({
         <article key={campaign.id} className="data-row">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-ink">{campaign.title}</h3>
+              <h3 className="text-base font-semibold text-ink">
+                {brandSlug ? (
+                  <Link
+                    href={buildCampaignWorkspaceHref(brandSlug, campaign.id)}
+                    className="hover:text-accent"
+                  >
+                    {campaign.title}
+                  </Link>
+                ) : (
+                  campaign.title
+                )}
+              </h3>
               <p className="mt-1 text-sm text-ink-muted">
                 {campaign.startDate ? formatShortDate(campaign.startDate) : "No start"}{" "}
                 to {campaign.endDate ? formatShortDate(campaign.endDate) : "No end"}
@@ -45,6 +59,12 @@ export function CampaignList({
               ) : null}
               {allowDelete && brandSlug ? (
                 <>
+                  <Link
+                    href={buildCampaignWorkspaceHref(brandSlug, campaign.id)}
+                    className="text-sm font-medium text-ink-muted hover:text-ink"
+                  >
+                    Open
+                  </Link>
                   <CampaignEditForm campaign={campaign} brandSlug={brandSlug} />
                   <form action={deleteCampaign}>
                     <input type="hidden" name="campaignId" value={campaign.id} />

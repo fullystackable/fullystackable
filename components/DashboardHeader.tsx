@@ -8,6 +8,7 @@ type DashboardHeaderProps = {
   subtitle: string;
   meta?: ReactNode;
   action?: ReactNode;
+  size?: "default" | "compact";
 };
 
 export function DashboardHeader({
@@ -16,15 +17,32 @@ export function DashboardHeader({
   subtitle,
   meta,
   action,
+  size = "default",
 }: DashboardHeaderProps) {
+  const isCompact = size === "compact";
+
   return (
-    <header className="mb-8 flex flex-col gap-5 border-b border-app-line pb-6 lg:flex-row lg:items-end lg:justify-between">
+    <header
+      className={`flex flex-col gap-5 border-b border-app-line pb-6 lg:flex-row lg:items-end lg:justify-between ${
+        isCompact ? "mb-6" : "mb-8"
+      }`}
+    >
       <div className="min-w-0 max-w-3xl">
         <Badge tone="info">{eyebrow}</Badge>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        <h1
+          className={`font-semibold tracking-tight text-ink ${
+            isCompact
+              ? "mt-3 text-2xl sm:text-3xl"
+              : "mt-4 text-3xl sm:text-4xl"
+          }`}
+        >
           {title}
         </h1>
-        <p className="mt-3 text-sm leading-7 text-ink-muted sm:text-base">
+        <p
+          className={`text-sm leading-7 text-ink-muted sm:text-base ${
+            isCompact ? "mt-2" : "mt-3"
+          }`}
+        >
           {subtitle}
         </p>
         {meta ? <div className="mt-4 flex flex-wrap gap-2">{meta}</div> : null}

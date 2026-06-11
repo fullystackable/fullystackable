@@ -67,6 +67,13 @@ export function CampaignCreateForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Launch date</span>
+          <input name="launchDate" type="date" className="app-input" />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Start date</span>
           <input name="startDate" type="date" className="app-input" />
         </label>
@@ -98,7 +105,7 @@ export function CampaignCreateForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-muted">
-          Campaigns give tasks, assets, and future work a shared initiative to orbit around.
+          Campaigns give tasks, assets, and future work a shared initiative to orbit around. Extended details can be filled in from the campaign page.
         </p>
         <SubmitButton idleLabel="Add campaign" pendingLabel="Adding..." />
       </div>

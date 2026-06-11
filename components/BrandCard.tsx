@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { BrandEditForm } from "@/components/BrandEditForm";
+import { BrandColorBadge } from "@/components/BrandColorBadge";
+import { BrandQuickActions } from "@/components/BrandQuickActions";
 import { Badge, Card } from "@/components/ui";
 import { brandStatusTones } from "@/lib/design";
 import type { BrandDirectoryItem } from "@/lib/workspace-view";
@@ -22,11 +23,14 @@ export function BrandCard({ brand }: BrandCardProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
               Brand
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink">
               {brand.name}
             </h2>
           </div>
-          <Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>
+          <div className="flex flex-wrap justify-end gap-2">
+            <BrandColorBadge color={brand.brandColor} label="Planner color" />
+            <Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>
+          </div>
         </div>
 
         <p className="text-sm leading-6 text-ink-muted">{brand.description}</p>
@@ -84,17 +88,13 @@ export function BrandCard({ brand }: BrandCardProps) {
           </Link>
         </div>
 
-        <BrandEditForm
+        <BrandQuickActions
           brand={{
             id: brand.id,
             slug: brand.slug,
             name: brand.name,
-            descriptionValue: brand.descriptionValue,
-            website: brand.website,
-            statusValue: brand.statusValue,
-            brandNotes: brand.brandNotes,
+            campaigns: brand.campaigns,
           }}
-          buttonLabel="Quick edit"
         />
       </div>
     </Card>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { BrandColorBadge } from "@/components/BrandColorBadge";
 import { Badge, Card, SectionHeader } from "@/components/ui";
 import {
   compareDateStrings,
@@ -51,7 +52,12 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
         eyebrow="Snapshot"
         title="Brand snapshot"
         description="A quick operating read on the brand's current status, work volume, and latest movement."
-        action={<Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <BrandColorBadge color={brand.brandColor} label="Workspace color" />
+            <Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>
+          </div>
+        }
       />
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -78,6 +84,10 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
           ) : (
             <p className="text-sm text-ink-muted">No website added</p>
           )}
+        </InfoTile>
+
+        <InfoTile label="Workspace color">
+          <BrandColorBadge color={brand.brandColor} label={brand.brandColor} />
         </InfoTile>
 
         <InfoTile label="Primary contact">

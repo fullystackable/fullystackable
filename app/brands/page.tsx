@@ -35,37 +35,25 @@ export default async function BrandsPage({ searchParams }: BrandsPageProps) {
         eyebrow="Portfolio"
         title="All brands"
         subtitle="Browse every active account, quickly spot risk, and jump straight into the workspace that needs attention."
-        meta={<Badge>{currentBrandsCount} current brands in portfolio</Badge>}
+        size="compact"
+        meta={
+          <>
+            <Badge>{currentBrandsCount} current brands</Badge>
+            {statusSummary.map((item) => (
+              <Badge key={item.label}>
+                {item.label}: {item.count}
+              </Badge>
+            ))}
+          </>
+        }
       />
 
-      <section className="grid gap-4 md:grid-cols-3">
-        {statusSummary.map((item) => (
-          <Card key={item.label} className="h-full">
-            <p className="text-sm font-medium text-ink-muted">{item.label}</p>
-            <p className="mt-4 text-4xl font-semibold tracking-tight text-ink">
-              {item.count}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-ink-muted">{item.helper}</p>
-          </Card>
-        ))}
-      </section>
-
-      <Card className="mt-6">
-        <SectionHeader
-          eyebrow="Create"
-          title="Add a brand workspace"
-          description="Start a new brand with a clean command center, then fill in tasks, assets, contacts, and notes over time."
-        />
-        <div className="mt-6">
-          <BrandCreateForm />
-        </div>
-      </Card>
-
-      <Card id="directory" className="mt-6">
+      <Card id="directory">
         <SectionHeader
           title="Workspace directory"
           description="Each brand includes active tasks, creative assets, contacts, upcoming work, and notes so the whole operating picture stays visible."
           action={<Badge>{filteredCount} shown</Badge>}
+          compact
         />
 
         <BrandDirectoryFilters
@@ -93,6 +81,18 @@ export default async function BrandsPage({ searchParams }: BrandsPageProps) {
               className="lg:col-span-2"
             />
           )}
+        </div>
+      </Card>
+
+      <Card className="mt-5">
+        <SectionHeader
+          eyebrow="Create"
+          title="Add a brand workspace"
+          description="Start a new brand with a clean command center, then fill in tasks, assets, contacts, and notes over time."
+          compact
+        />
+        <div className="mt-5">
+          <BrandCreateForm />
         </div>
       </Card>
     </div>

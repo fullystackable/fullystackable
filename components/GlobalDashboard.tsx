@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandColorBadge } from "@/components/BrandColorBadge";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Badge, Card, EmptyState, SectionHeader } from "@/components/ui";
 import {
@@ -15,7 +16,11 @@ import type {
   GlobalDashboardData,
 } from "@/lib/dashboard-data";
 import { getDueDateTone, taskPriorityTones, taskStatusTones } from "@/lib/design";
-import { buildWorkspaceTaskHref } from "@/lib/workspace-url-state";
+import {
+  buildCampaignWorkspaceHref,
+  buildWorkspaceTaskHref,
+  buildWorkspaceViewHref,
+} from "@/lib/workspace-url-state";
 
 type GlobalDashboardProps = {
   data: GlobalDashboardData;
@@ -134,7 +139,17 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             eyebrow="Upcoming"
             title="Upcoming items"
             description="Future launches, meetings, deadlines, and reminders across all brands."
-            action={<Badge>{data.upcomingItems.length}</Badge>}
+            action={
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge>{data.upcomingItems.length}</Badge>
+                <Link
+                  href="/calendar"
+                  className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+                >
+                  Open planner
+                </Link>
+              </div>
+            }
           />
           <div className="mt-6">
             {data.upcomingItems.length > 0 ? (
@@ -266,14 +281,18 @@ function DashboardUpcomingItem({ item }: { item: DashboardUpcomingWithBrand }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/brands/${item.brandSlug}#upcoming`}
+            href={buildWorkspaceViewHref(item.brandSlug, {
+              tab: "upcoming",
+              hash: "#upcoming",
+            })}
             className="text-base font-semibold text-ink hover:text-accent"
           >
             {item.title}
           </Link>
-          <p className="mt-2 text-sm text-ink-muted">
-            {item.brandName} | {formatWeekdayDate(item.date)}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <BrandColorBadge color={item.brandColor} label={item.brandName} size="xs" />
+            <p className="text-sm text-ink-muted">{formatWeekdayDate(item.date)}</p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge>{item.type}</Badge>
@@ -290,7 +309,10 @@ function DashboardAssetItem({ asset }: { asset: DashboardAssetWithBrand }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/brands/${asset.brandSlug}#assets`}
+            href={buildWorkspaceViewHref(asset.brandSlug, {
+              tab: "assets",
+              hash: "#assets",
+            })}
             className="text-base font-semibold text-ink hover:text-accent"
           >
             {asset.title}
@@ -306,12 +328,19 @@ function DashboardAssetItem({ asset }: { asset: DashboardAssetWithBrand }) {
 }
 
 function DashboardNoteItem({ note }: { note: GlobalDashboardData["recentNotes"][number] }) {
+  const noteHref = note.brandSlug
+    ? buildWorkspaceViewHref(note.brandSlug, {
+        tab: "notes",
+        hash: "#notes",
+      })
+    : "/brands";
+
   return (
     <article className="data-row">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/brands/${note.brandSlug}#notes`}
+            href={noteHref}
             className="text-base font-semibold text-ink hover:text-accent"
           >
             {note.title ?? note.brandName ?? "Working note"}
@@ -337,7 +366,7 @@ function DashboardCampaignItem({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/brands/${campaign.brandSlug}#campaigns`}
+            href={buildCampaignWorkspaceHref(campaign.brandSlug, campaign.id)}
             className="text-base font-semibold text-ink hover:text-accent"
           >
             {campaign.title}

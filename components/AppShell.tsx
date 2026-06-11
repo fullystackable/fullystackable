@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
+import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 import { Badge } from "@/components/ui";
 import { Sidebar } from "@/components/Sidebar";
 
@@ -19,19 +20,27 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-app-bg text-ink">
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col lg:flex-row">
-        <Sidebar />
+        <Suspense fallback={<div className="w-full shrink-0 bg-app-sidebar lg:w-[260px]" />}>
+          <Sidebar />
+        </Suspense>
         <div className="min-w-0 flex-1">
           <div className="border-b border-app-line bg-white/78 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] xl:items-center">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-ink">Portfolio workspace</p>
                 <p className="mt-1 text-sm text-ink-muted">
                   Clean execution surfaces for tasks, assets, contacts, and notes.
                 </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Badge tone="info">Command center</Badge>
+                  <Badge>{todayLabel}</Badge>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge tone="info">Command center</Badge>
-                <Badge>{todayLabel}</Badge>
+
+              <div className="min-w-0">
+                <Suspense fallback={<div className="h-10 rounded-full border border-app-line bg-white/70" />}>
+                  <GlobalSearchForm compact />
+                </Suspense>
               </div>
             </div>
           </div>

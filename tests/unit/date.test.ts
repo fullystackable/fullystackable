@@ -6,6 +6,7 @@ import {
   getTaskDueDateLabel,
 } from "../../lib/date";
 import {
+  buildCampaignWorkspaceHref,
   buildCampaignClearHref,
   buildWorkspaceResetHref,
   buildWorkspaceTaskHref,
@@ -56,6 +57,9 @@ describe("workspace URL state helpers", () => {
       "/brands/acme?campaign=campaign-123",
     );
     expect(buildWorkspaceResetHref("acme", null)).toBe("/brands/acme");
+    expect(buildWorkspaceResetHref("acme", "campaign-123", "notes")).toBe(
+      "/brands/acme?campaign=campaign-123&tab=notes",
+    );
   });
 
   it("keeps non-default workspace state when clearing campaign focus", () => {
@@ -70,6 +74,19 @@ describe("workspace URL state helpers", () => {
       ),
     ).toBe(
       "/brands/acme?taskSort=priority_desc&taskView=incomplete&assetSort=type&upcomingSort=status&density=compact",
+    );
+    expect(
+      buildCampaignClearHref(
+        "acme",
+        "priority_desc",
+        "incomplete",
+        "type",
+        "status",
+        "compact",
+        "assets",
+      ),
+    ).toBe(
+      "/brands/acme?taskSort=priority_desc&taskView=incomplete&assetSort=type&upcomingSort=status&density=compact&tab=assets",
     );
   });
 
@@ -96,5 +113,17 @@ describe("workspace URL state helpers", () => {
     expect(buildWorkspaceTaskHref("acme", "campaign-123")).toBe(
       "/brands/acme?campaign=campaign-123&taskView=incomplete#tasks",
     );
+  });
+
+  it("builds campaign workspace links with compact default state", () => {
+    expect(buildCampaignWorkspaceHref("acme", "campaign-123")).toBe(
+      "/brands/acme/campaigns/campaign-123",
+    );
+    expect(
+      buildCampaignWorkspaceHref("acme", "campaign-123", {
+        tab: "assets",
+        hash: "#assets",
+      }),
+    ).toBe("/brands/acme/campaigns/campaign-123?tab=assets#assets");
   });
 });

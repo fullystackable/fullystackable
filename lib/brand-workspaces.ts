@@ -36,6 +36,7 @@ type BrandRow = {
   positioning_notes: string | null;
   do_dont_list: string | null;
   reference_links: string | null;
+  brand_color: string | null;
 };
 
 type TaskRow = {
@@ -123,8 +124,12 @@ type CampaignRow = {
   status: "planned" | "active" | "paused" | "completed" | "archived";
   start_date: string | null;
   end_date: string | null;
+  launch_date: string | null;
   goals: string[] | null;
   notes: string | null;
+  content_ideas: string | null;
+  links: string | null;
+  results_notes: string | null;
 };
 
 type UpcomingItemRow = {
@@ -316,7 +321,7 @@ async function fetchBrands() {
   const { data, error } = await supabase
     .from("brands")
     .select(
-      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links",
+      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links, brand_color",
     )
     .order("name");
 
@@ -352,12 +357,17 @@ export async function getBrandDirectoryPageData(
   }
 
   const supabase = createSupabaseServerClient();
-  const [tasksResult, assetsResult] = await Promise.all([
+  const [tasksResult, assetsResult, campaignsResult] = await Promise.all([
     supabase
       .from("tasks")
       .select("id, brand_id, status, priority")
       .in("brand_id", brandIds),
     supabase.from("assets").select("id, brand_id").in("brand_id", brandIds),
+    supabase
+      .from("campaigns")
+      .select("id, brand_id, title, status")
+      .in("brand_id", brandIds)
+      .order("title"),
   ]);
 
   if (tasksResult.error) {
@@ -368,11 +378,24 @@ export async function getBrandDirectoryPageData(
     throw new Error(`Failed to load asset summaries: ${assetsResult.error.message}`);
   }
 
+  if (campaignsResult.error) {
+    throw new Error(`Failed to load campaign summaries: ${campaignsResult.error.message}`);
+  }
+
   const tasksByBrand = new Map<
     string,
     { tasksCount: number; urgentTasks: number }
   >();
   const assetsCountByBrand = new Map<string, number>();
+  const campaignsByBrand = new Map<
+    string,
+    Array<{
+      id: string;
+      title: string;
+      status: string;
+      statusValue: CampaignRow["status"];
+    }>
+  >();
 
   for (const task of (tasksResult.data ?? []) as Array<
     Pick<TaskRow, "brand_id" | "status" | "priority">
@@ -404,6 +427,21 @@ export async function getBrandDirectoryPageData(
     );
   }
 
+  for (const campaign of (campaignsResult.data ?? []) as Array<
+    Pick<CampaignRow, "id" | "brand_id" | "title" | "status">
+  >) {
+    const current = campaignsByBrand.get(campaign.brand_id) ?? [];
+
+    current.push({
+      id: campaign.id,
+      title: campaign.title,
+      status: humanizeSnakeCase(campaign.status),
+      statusValue: campaign.status,
+    });
+
+    campaignsByBrand.set(campaign.brand_id, current);
+  }
+
   const directoryItems: BrandDirectoryItem[] = brands.map((brand) => {
     const taskSummary = tasksByBrand.get(brand.id);
 
@@ -411,6 +449,7 @@ export async function getBrandDirectoryPageData(
       id: brand.id,
       slug: brand.slug,
       name: brand.name,
+      brandColor: brand.brand_color ?? "#0F766E",
       description: brand.description ?? "No description added yet.",
       descriptionValue: brand.description,
       website: brand.website,
@@ -421,6 +460,7 @@ export async function getBrandDirectoryPageData(
       assetsCount: assetsCountByBrand.get(brand.id) ?? 0,
       urgentTasks: taskSummary?.urgentTasks ?? 0,
       searchMatchReason: null,
+      campaigns: campaignsByBrand.get(brand.id) ?? [],
     };
   });
 
@@ -484,7 +524,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
   const brandResult = await supabase
     .from("brands")
     .select(
-      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links",
+      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links, brand_color",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -528,7 +568,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
       supabase
         .from("campaigns")
         .select(
-          "id, brand_id, title, description, status, start_date, end_date, goals, notes",
+          "id, brand_id, title, description, status, start_date, end_date, launch_date, goals, notes, content_ideas, links, results_notes",
         )
         .eq("brand_id", brand.id)
         .order("start_date", { ascending: true }),
@@ -580,6 +620,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
     id: brand.id,
     slug: brand.slug,
     name: brand.name,
+    brandColor: brand.brand_color ?? "#0F766E",
     description: brand.description ?? "No description added yet.",
     descriptionValue: brand.description,
     website: brand.website,
@@ -650,8 +691,12 @@ export async function getBrandWorkspaceBySlug(slug: string) {
       statusValue: campaign.status,
       startDate: campaign.start_date,
       endDate: campaign.end_date,
+      launchDate: campaign.launch_date,
       goals: campaign.goals ?? [],
       notes: campaign.notes,
+      contentIdeas: campaign.content_ideas,
+      links: campaign.links,
+      resultsNotes: campaign.results_notes,
     })),
     upcoming: ((upcomingResult.data ?? []) as UpcomingItemRow[]).map((item) => ({
       id: item.id,

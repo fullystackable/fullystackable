@@ -114,6 +114,7 @@ export type BrandDirectoryItem = {
   id: string;
   slug: string;
   name: string;
+  brandColor: string;
   description: string;
   descriptionValue: string | null;
   website: string | null;
@@ -124,6 +125,12 @@ export type BrandDirectoryItem = {
   assetsCount: number;
   urgentTasks: number;
   searchMatchReason: string | null;
+  campaigns: Array<{
+    id: string;
+    title: string;
+    status: string;
+    statusValue: CampaignStatusValue;
+  }>;
 };
 
 export type WorkspaceTask = {
@@ -181,8 +188,12 @@ export type WorkspaceCampaign = {
   statusValue: CampaignStatusValue;
   startDate: string | null;
   endDate: string | null;
+  launchDate: string | null;
   goals: string[];
   notes: string | null;
+  contentIdeas: string | null;
+  links: string | null;
+  resultsNotes: string | null;
 };
 
 export type WorkspaceUpcomingItem = {
@@ -216,6 +227,7 @@ export type BrandWorkspaceData = {
   id: string;
   slug: string;
   name: string;
+  brandColor: string;
   description: string;
   descriptionValue: string | null;
   website: string | null;
@@ -236,6 +248,31 @@ export type BrandWorkspaceData = {
   campaigns: WorkspaceCampaign[];
   upcoming: WorkspaceUpcomingItem[];
   notes: WorkspaceNote[];
+};
+
+export type CampaignWorkspaceData = {
+  id: string;
+  brandId: string;
+  brandSlug: string;
+  brandName: string;
+  brandStatus: BrandStatusLabel;
+  brandColor: string;
+  title: string;
+  description: string | null;
+  status: string;
+  statusValue: CampaignStatusValue;
+  startDate: string | null;
+  endDate: string | null;
+  launchDate: string | null;
+  goals: string[];
+  notes: string | null;
+  contentIdeas: string | null;
+  links: string | null;
+  resultsNotes: string | null;
+  brandCampaigns: WorkspaceCampaign[];
+  tasks: WorkspaceTask[];
+  assets: WorkspaceAsset[];
+  upcoming: WorkspaceUpcomingItem[];
 };
 
 export type StatusSummaryItem = {

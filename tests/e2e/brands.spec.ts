@@ -35,6 +35,8 @@ test.describe("brands directory", () => {
 
     try {
       await openBrandWorkspaceFromDirectory(page, brandName);
+      await openWorkspaceTab(page, "Profile");
+      await page.getByRole("button", { name: "Edit brand settings" }).click();
 
       const editForm = page.locator("form").filter({
         has: page.getByRole("button", { name: "Save brand" }),
@@ -82,6 +84,7 @@ test.describe("brands directory", () => {
 
     try {
       await openBrandWorkspaceFromDirectory(page, brandName);
+      await page.getByRole("button", { name: "New task" }).click();
 
       const taskCreateForm = page.locator("form").filter({
         has: page.getByRole("button", { name: "Add task" }),
@@ -167,7 +170,12 @@ test.describe("brands directory", () => {
       await createCampaignInWorkspace(page, secondaryCampaignTitle);
 
       const tasksSection = getWorkspaceSection(page, "tasks");
-      const taskCreateForm = getSectionCreateForm(tasksSection, "Add task");
+      const taskCreateForm = await openSectionCreateForm(
+        tasksSection,
+        page,
+        "New task",
+        "Add task",
+      );
 
       await taskCreateForm.getByLabel("Task title").fill(initialTaskTitle);
       await taskCreateForm.getByLabel("Due date").fill(initialTaskDueDate);
@@ -226,8 +234,14 @@ test.describe("brands directory", () => {
         updatedTaskCard.getByRole("button", { name: "Approve done" }),
       ).toBeVisible();
 
+      await openWorkspaceTab(page, "Assets");
       const assetsSection = getWorkspaceSection(page, "assets");
-      const assetCreateForm = getSectionCreateForm(assetsSection, "Add asset");
+      const assetCreateForm = await openSectionCreateForm(
+        assetsSection,
+        page,
+        "New asset",
+        "Add asset",
+      );
 
       await assetCreateForm.getByLabel("Asset title").fill(initialAssetTitle);
       await assetCreateForm.getByLabel("Category").selectOption("document");
@@ -316,9 +330,12 @@ test.describe("brands directory", () => {
         updatedAssetRow.getByRole("link", { name: "Open link" }),
       ).toHaveCount(0);
 
+      await openWorkspaceTab(page, "Upcoming");
       const upcomingSection = getWorkspaceSection(page, "upcoming");
-      const upcomingCreateForm = getSectionCreateForm(
+      const upcomingCreateForm = await openSectionCreateForm(
         upcomingSection,
+        page,
+        "New upcoming item",
         "Add upcoming item",
       );
 
@@ -419,9 +436,12 @@ test.describe("brands directory", () => {
     try {
       await openBrandWorkspaceFromDirectory(page, brandName);
 
+      await openWorkspaceTab(page, "Contacts");
       const contactsSection = getWorkspaceSection(page, "contacts");
-      const contactCreateForm = getSectionCreateForm(
+      const contactCreateForm = await openSectionCreateForm(
         contactsSection,
+        page,
+        "New contact",
         "Add contact",
       );
 
@@ -490,8 +510,14 @@ test.describe("brands directory", () => {
       ).toBeVisible();
       await expect(updatedContactRow.getByText(updatedContactNotes)).toBeVisible();
 
+      await openWorkspaceTab(page, "Notes");
       const notesSection = getWorkspaceSection(page, "notes");
-      const noteCreateForm = getSectionCreateForm(notesSection, "Add note");
+      const noteCreateForm = await openSectionCreateForm(
+        notesSection,
+        page,
+        "New note",
+        "Add note",
+      );
 
       await noteCreateForm.getByLabel("Title").fill(initialNoteTitle);
       await noteCreateForm.getByLabel("Category").selectOption("random");
@@ -599,7 +625,12 @@ async function openBrandWorkspaceFromDirectory(page: Page, brandName: string) {
 
 async function createCampaignInWorkspace(page: Page, campaignTitle: string) {
   const campaignsSection = getWorkspaceSection(page, "campaigns");
-  const createForm = getSectionCreateForm(campaignsSection, "Add campaign");
+  const createForm = await openSectionCreateForm(
+    campaignsSection,
+    page,
+    "New campaign",
+    "Add campaign",
+  );
 
   await createForm.getByLabel("Campaign title").fill(campaignTitle);
   await createForm.getByRole("button", { name: "Add campaign" }).click();
@@ -631,8 +662,20 @@ function getWorkspaceSection(page: Page, sectionId: string) {
   return page.locator(`section#${sectionId}`);
 }
 
-function getSectionCreateForm(section: Locator, submitButtonName: string) {
-  return section.locator("form").filter({ hasText: submitButtonName }).first();
+async function openSectionCreateForm(
+  section: Locator,
+  page: Page,
+  toggleButtonName: string,
+  submitButtonName: string,
+) {
+  const toggleButton = section.getByRole("button", { name: toggleButtonName });
+  await expect(toggleButton).toBeVisible();
+  await toggleButton.click();
+
+  const form = page.locator("form").filter({ hasText: submitButtonName }).last();
+  await expect(form).toBeVisible();
+
+  return form;
 }
 
 function getArticleByHeading(section: Locator, title: string) {
@@ -670,6 +713,15 @@ async function openInlineEditForm(
   await expect(form).toBeVisible({ timeout: 10_000 });
 
   return form;
+}
+
+async function openWorkspaceTab(page: Page, tabName: string) {
+  const tabLink = page.getByRole("link", {
+    name: new RegExp(`^${tabName}(\\s+\\d+)?$`),
+  });
+
+  await expect(tabLink).toBeVisible();
+  await tabLink.click();
 }
 
 async function cleanupBrand(page: Page, brandName: string) {

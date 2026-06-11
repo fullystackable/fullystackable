@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { deleteBrand } from "@/app/actions/workspace";
+import { BrandColorBadge } from "@/components/BrandColorBadge";
 import { BrandWorkspace } from "@/components/BrandWorkspace";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Badge } from "@/components/ui";
 import { getBrandWorkspaceBySlug } from "@/lib/brand-workspaces";
 import { brandStatusTones } from "@/lib/design";
+import type { WorkspaceTab } from "@/lib/workspace-url-state";
 import type { TaskViewFilter, WorkspaceDensity } from "@/lib/workspace-view";
 
 type TaskSortOption = "due_asc" | "priority_desc" | "status" | "title";
@@ -22,6 +24,7 @@ type BrandPageProps = {
     assetSort?: string;
     upcomingSort?: string;
     density?: string;
+    tab?: string;
   }>;
 };
 
@@ -81,6 +84,20 @@ function normalizeTaskView(value: string | undefined): TaskViewFilter {
   }
 }
 
+function normalizeWorkspaceTab(value: string | undefined): WorkspaceTab {
+  switch (value) {
+    case "upcoming":
+    case "assets":
+    case "contacts":
+    case "notes":
+    case "profile":
+      return value;
+    case "tasks":
+    default:
+      return "tasks";
+  }
+}
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -122,6 +139,7 @@ export default async function BrandPage({
   const assetSort = normalizeAssetSort(resolvedSearchParams.assetSort);
   const upcomingSort = normalizeUpcomingSort(resolvedSearchParams.upcomingSort);
   const density = normalizeDensity(resolvedSearchParams.density);
+  const activeTab = normalizeWorkspaceTab(resolvedSearchParams.tab);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col">
@@ -129,7 +147,12 @@ export default async function BrandPage({
         eyebrow="Workspace"
         title={brand.name}
         subtitle={brand.description}
-        meta={<Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>}
+        meta={
+          <>
+            <BrandColorBadge color={brand.brandColor} label="Calendar color" />
+            <Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>
+          </>
+        }
         action={
           <div className="flex flex-wrap gap-3">
             {brand.website ? (
@@ -162,6 +185,7 @@ export default async function BrandPage({
         assetSort={assetSort}
         upcomingSort={upcomingSort}
         density={density}
+        activeTab={activeTab}
       />
     </div>
   );

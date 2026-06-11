@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 
 import { createBrand } from "@/app/actions/workspace";
 
+import { BrandColorField } from "@/components/BrandColorField";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const initialState = {
@@ -48,6 +49,8 @@ export function BrandCreateForm() {
           placeholder="What this brand is working on, what matters most, and how the workspace should be used."
         />
       </label>
+
+      <BrandColorField name="brandColor" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-muted">

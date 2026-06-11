@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { normalizeBrandColor } from "@/lib/brand-colors";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type ActionState = {
@@ -99,6 +100,7 @@ export async function createBrand(
   const name = getString(formData, "name");
   const website = getString(formData, "website");
   const description = getString(formData, "description");
+  const brandColor = normalizeBrandColor(getString(formData, "brandColor"));
 
   if (!name) {
     return {
@@ -112,6 +114,7 @@ export async function createBrand(
   const { error } = await supabase.from("brands").insert({
     name,
     slug,
+    brand_color: brandColor,
     description: description || null,
     website: website || null,
     status: "active",
@@ -142,6 +145,7 @@ export async function updateBrand(
   const name = getString(formData, "name");
   const website = getString(formData, "website");
   const description = getString(formData, "description");
+  const brandColor = normalizeBrandColor(getString(formData, "brandColor"));
   const status = getString(formData, "status") || "active";
   const notes = getString(formData, "notes");
   const brandVoice = getString(formData, "brandVoice");
@@ -172,6 +176,7 @@ export async function updateBrand(
     .from("brands")
     .update({
       name,
+      brand_color: brandColor,
       website: website || null,
       description: description || null,
       status,
@@ -1032,8 +1037,12 @@ export async function createCampaign(
   const status = getString(formData, "status") || "planned";
   const startDate = getString(formData, "startDate");
   const endDate = getString(formData, "endDate");
+  const launchDate = getString(formData, "launchDate");
   const goals = getString(formData, "goals");
   const notes = getString(formData, "notes");
+  const contentIdeas = getString(formData, "contentIdeas");
+  const links = getString(formData, "links");
+  const resultsNotes = getString(formData, "resultsNotes");
 
   if (!brandId || !brandSlug) {
     return {
@@ -1066,8 +1075,12 @@ export async function createCampaign(
     status,
     start_date: startDate || null,
     end_date: endDate || null,
+    launch_date: launchDate || null,
     goals: parsedGoals,
     notes: notes || null,
+    content_ideas: contentIdeas || null,
+    links: links || null,
+    results_notes: resultsNotes || null,
   });
 
   if (error) {
@@ -1097,8 +1110,12 @@ export async function updateCampaign(
   const status = getString(formData, "status") || "planned";
   const startDate = getString(formData, "startDate");
   const endDate = getString(formData, "endDate");
+  const launchDate = getString(formData, "launchDate");
   const goals = getString(formData, "goals");
   const notes = getString(formData, "notes");
+  const contentIdeas = getString(formData, "contentIdeas");
+  const links = getString(formData, "links");
+  const resultsNotes = getString(formData, "resultsNotes");
 
   if (!campaignId || !brandSlug) {
     return {
@@ -1130,8 +1147,12 @@ export async function updateCampaign(
       status,
       start_date: startDate || null,
       end_date: endDate || null,
+      launch_date: launchDate || null,
       goals: goals ? parseGoals(goals) : [],
       notes: notes || null,
+      content_ideas: contentIdeas || null,
+      links: links || null,
+      results_notes: resultsNotes || null,
     })
     .eq("id", campaignId);
 
@@ -1168,4 +1189,43 @@ export async function deleteCampaign(formData: FormData) {
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+}
+
+export async function completeCampaignObjective(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const campaignId = getString(formData, "campaignId");
+  const brandSlug = getString(formData, "brandSlug");
+
+  if (!campaignId || !brandSlug) {
+    return {
+      success: false,
+      message: "Campaign context is missing.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("campaigns")
+    .update({
+      status: "completed",
+      end_date: getString(formData, "completedOn") || null,
+    })
+    .eq("id", campaignId);
+
+  if (error) {
+    return {
+      success: false,
+      message: `Could not complete campaign objective: ${error.message}`,
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+
+  return {
+    success: true,
+    message: "Objective marked complete.",
+  };
 }

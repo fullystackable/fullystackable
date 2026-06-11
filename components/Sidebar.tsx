@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { Badge, cx } from "@/components/ui";
+import type { WorkspaceTab } from "@/lib/workspace-url-state";
 
 type NavItem = {
   label: string;
   href: string;
   match?: (pathname: string) => boolean;
+  tab?: WorkspaceTab;
 };
 
 const primaryNav: NavItem[] = [
@@ -22,33 +24,76 @@ const primaryNav: NavItem[] = [
     href: "/brands",
     match: (pathname) => pathname.startsWith("/brands"),
   },
+  {
+    label: "Calendar",
+    href: "/calendar",
+    match: (pathname) => pathname.startsWith("/calendar"),
+  },
+  {
+    label: "Search",
+    href: "/search",
+    match: (pathname) => pathname.startsWith("/search"),
+  },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isBrandWorkspace =
     pathname.startsWith("/brands/") && pathname.split("/").length > 2;
+  const activeWorkspaceTab = normalizeWorkspaceTab(searchParams.get("tab"));
+
+  const buildWorkspaceHref = (tab: WorkspaceTab, hash: string) => {
+    if (!isBrandWorkspace) {
+      if (hash === "#contacts") {
+        return "/brands#directory";
+      }
+
+      if (hash === "#upcoming") {
+        return "/calendar";
+      }
+
+      return `/dashboard${hash}`;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (tab === "tasks") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+
+    const query = params.toString();
+
+    return `${pathname}${query ? `?${query}` : ""}${hash}`;
+  };
 
   const workspaceNav: NavItem[] = [
     {
       label: "Tasks",
-      href: isBrandWorkspace ? `${pathname}#tasks` : "/dashboard#tasks",
+      href: buildWorkspaceHref("tasks", "#tasks"),
+      tab: "tasks",
     },
     {
       label: "Upcoming",
-      href: isBrandWorkspace ? `${pathname}#upcoming` : "/dashboard#upcoming",
+      href: buildWorkspaceHref("upcoming", "#upcoming"),
+      tab: "upcoming",
     },
     {
       label: "Assets",
-      href: isBrandWorkspace ? `${pathname}#assets` : "/dashboard#assets",
+      href: buildWorkspaceHref("assets", "#assets"),
+      tab: "assets",
     },
     {
       label: "Contacts",
-      href: isBrandWorkspace ? `${pathname}#contacts` : "/brands#directory",
+      href: buildWorkspaceHref("contacts", "#contacts"),
+      tab: "contacts",
     },
     {
       label: "Notes",
-      href: isBrandWorkspace ? `${pathname}#notes` : "/dashboard#notes",
+      href: buildWorkspaceHref("notes", "#notes"),
+      tab: "notes",
     },
   ];
 
@@ -100,16 +145,22 @@ export function Sidebar() {
             Workspace
           </p>
           <nav className="mt-3 space-y-2">
-            {workspaceNav.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={cx("sidebar-link", "py-3 text-sm")}
-                data-active={false}
-              >
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {workspaceNav.map((item) => {
+              const isActive = isBrandWorkspace
+                ? activeWorkspaceTab === item.tab
+                : false;
+
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={cx("sidebar-link", "py-3 text-sm")}
+                  data-active={isActive}
+                >
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
@@ -130,4 +181,18 @@ export function Sidebar() {
       </div>
     </aside>
   );
+}
+
+function normalizeWorkspaceTab(value: string | null): WorkspaceTab {
+  switch (value) {
+    case "upcoming":
+    case "assets":
+    case "contacts":
+    case "notes":
+    case "profile":
+      return value;
+    case "tasks":
+    default:
+      return "tasks";
+  }
 }

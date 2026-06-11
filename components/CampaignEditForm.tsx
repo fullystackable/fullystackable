@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { updateCampaign } from "@/app/actions/workspace";
 import { SubmitButton } from "@/components/SubmitButton";
+import { cx } from "@/components/ui";
 import type { WorkspaceCampaign } from "@/lib/workspace-view";
 
 const initialState = {
@@ -14,17 +16,24 @@ const initialState = {
 type CampaignEditFormProps = {
   campaign: WorkspaceCampaign;
   brandSlug: string;
+  buttonLabel?: string;
+  alwaysExpanded?: boolean;
+  framed?: boolean;
 };
 
 export function CampaignEditForm({
   campaign,
   brandSlug,
+  buttonLabel = "Edit",
+  alwaysExpanded = false,
+  framed = true,
 }: CampaignEditFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
+  const router = useRouter();
 
-  if (!isEditing) {
+  if (!alwaysExpanded && !isEditing) {
     return (
       <>
         <button
@@ -32,7 +41,7 @@ export function CampaignEditForm({
           onClick={() => setIsEditing(true)}
           className="text-sm font-medium text-ink-muted hover:text-ink"
         >
-          Edit
+          {buttonLabel}
         </button>
         {wasSuccessful && message ? (
           <p
@@ -52,6 +61,7 @@ export function CampaignEditForm({
     setWasSuccessful(result.success);
 
     if (result.success) {
+      router.refresh();
       setIsEditing(false);
     }
   }
@@ -59,7 +69,11 @@ export function CampaignEditForm({
   return (
     <form
       action={handleSubmit}
-      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className={cx(
+        "order-last w-full basis-full space-y-4",
+        alwaysExpanded ? "" : "mt-4",
+        framed ? "rounded-2xl border border-app-line bg-white/90 p-4" : "",
+      )}
     >
       <input type="hidden" name="campaignId" value={campaign.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -96,6 +110,18 @@ export function CampaignEditForm({
             defaultValue={campaign.goals.join(", ")}
             className="app-input"
             placeholder="Launch offer, refresh creative, improve retargeting"
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Launch date</span>
+          <input
+            name="launchDate"
+            type="date"
+            defaultValue={campaign.launchDate ?? ""}
+            className="app-input"
           />
         </label>
       </div>
@@ -141,14 +167,54 @@ export function CampaignEditForm({
         />
       </label>
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Content ideas</span>
+          <textarea
+            name="contentIdeas"
+            rows={4}
+            defaultValue={campaign.contentIdeas ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="One idea per line"
+          />
+        </label>
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-ink">Links</span>
+          <textarea
+            name="links"
+            rows={4}
+            defaultValue={campaign.links ?? ""}
+            className="app-input min-h-28 resize-y"
+            placeholder="One link per line"
+          />
+        </label>
+      </div>
+
+      <label className="space-y-2">
+        <span className="text-sm font-medium text-ink">Results / post-campaign notes</span>
+        <textarea
+          name="resultsNotes"
+          rows={4}
+          defaultValue={campaign.resultsNotes ?? ""}
+          className="app-input min-h-28 resize-y"
+          placeholder="What happened, what worked, and what to carry forward."
+        />
+      </label>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => setIsEditing(false)}
-          className="text-sm font-medium text-ink-muted hover:text-ink"
-        >
-          Cancel
-        </button>
+        {alwaysExpanded ? (
+          <p className="text-sm text-ink-muted">
+            Update campaign details directly from this workspace.
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsEditing(false)}
+            className="text-sm font-medium text-ink-muted hover:text-ink"
+          >
+            Cancel
+          </button>
+        )}
         <SubmitButton idleLabel="Save campaign" pendingLabel="Saving..." />
       </div>
 

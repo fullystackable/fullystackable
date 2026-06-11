@@ -14,6 +14,7 @@ type SectionHeaderProps = {
   description?: string;
   action?: ReactNode;
   className?: string;
+  compact?: boolean;
 };
 
 type BadgeProps = {
@@ -44,7 +45,7 @@ export function cx(...classes: Array<string | false | null | undefined>) {
 
 export function Card({ children, className, id }: CardProps) {
   return (
-    <section id={id} className={cx("app-card p-5 sm:p-6", className)}>
+    <section id={id} className={cx("app-card p-4 sm:p-5", className)}>
       {children}
     </section>
   );
@@ -56,11 +57,14 @@ export function SectionHeader({
   description,
   action,
   className,
+  compact = false,
 }: SectionHeaderProps) {
   return (
     <div
       className={cx(
-        "flex flex-col gap-4 border-b border-app-line pb-5 sm:flex-row sm:items-end sm:justify-between",
+        compact
+          ? "flex flex-col gap-3 border-b border-app-line pb-4 sm:flex-row sm:items-end sm:justify-between"
+          : "flex flex-col gap-4 border-b border-app-line pb-4 sm:flex-row sm:items-end sm:justify-between",
         className,
       )}
     >
@@ -70,7 +74,12 @@ export function SectionHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
+        <h2
+          className={cx(
+            "font-semibold tracking-tight text-ink",
+            compact ? "mt-1 text-lg sm:text-xl" : "mt-2 text-xl sm:text-2xl",
+          )}
+        >
           {title}
         </h2>
         {description ? (
