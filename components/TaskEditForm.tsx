@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { updateTask } from "@/app/actions/workspace";
 import { CampaignSelectField } from "@/components/CampaignSelectField";
-
 import { SubmitButton } from "@/components/SubmitButton";
 import type { WorkspaceCampaign, WorkspaceTask } from "@/lib/workspace-view";
 
@@ -24,7 +23,7 @@ export function TaskEditForm({
   brandSlug,
   campaigns,
 }: TaskEditFormProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
 

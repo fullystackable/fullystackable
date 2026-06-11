@@ -50,7 +50,7 @@ export function BrandQuickActions({ brand }: BrandQuickActionsProps) {
             type="button"
             onClick={() => setActiveTab(tab.id)}
             className={cx(
-              "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium",
+              "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-sm font-medium",
               activeTab === tab.id
                 ? "bg-app-sidebar text-white"
                 : "border border-app-line bg-white text-ink-muted hover:bg-app-soft hover:text-ink",
@@ -119,7 +119,7 @@ function QuickTaskForm({ brand }: BrandQuickActionsProps) {
         </label>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p className="text-sm text-ink-muted">
           Lightweight task capture for fast brand operations.
         </p>
@@ -180,7 +180,7 @@ function QuickDeadlineForm({ brand }: BrandQuickActionsProps) {
         </label>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p className="text-sm text-ink-muted">
           Fast deadline capture for launch timing and approvals.
         </p>
@@ -241,7 +241,7 @@ function QuickObjectiveForm({ brand }: BrandQuickActionsProps) {
         <input name="completedOn" type="date" className="app-input" />
       </label>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p className="text-sm text-ink-muted">
           Marks the selected campaign objective as completed and removes it from active planning.
         </p>

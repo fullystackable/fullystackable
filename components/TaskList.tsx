@@ -82,7 +82,7 @@ export function TaskList({
                   </form>
                 ))}
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                 <TaskEditForm
                   task={task}
                   brandSlug={brandSlug}

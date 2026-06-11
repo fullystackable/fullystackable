@@ -24,7 +24,7 @@ export function AssetEditForm({
   brandSlug,
   campaigns,
 }: AssetEditFormProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
 

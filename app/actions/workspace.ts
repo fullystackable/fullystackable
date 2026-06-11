@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { createActivityLogEntry } from "@/lib/activity-log";
 import { normalizeBrandColor } from "@/lib/brand-colors";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { humanizeSnakeCase } from "@/lib/workspace-view";
 
 type ActionState = {
   success: boolean;
@@ -93,6 +95,30 @@ function normalizeAssetLocationFields(
   };
 }
 
+function revalidateActivityViews() {
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/activity");
+}
+
+async function writeActivitySafe(
+  input: Parameters<typeof createActivityLogEntry>[0],
+) {
+  try {
+    await createActivityLogEntry(input);
+  } catch (error) {
+    console.error("Failed to write activity log entry.", error);
+  }
+}
+
+function getUpcomingActivityLabel(type: string) {
+  if (type === "campaign_launch") {
+    return "Launch";
+  }
+
+  return humanizeSnakeCase(type);
+}
+
 export async function createBrand(
   _previousState: ActionState,
   formData: FormData,
@@ -111,14 +137,18 @@ export async function createBrand(
 
   const slug = await ensureUniqueBrandSlug(name);
   const supabase = createSupabaseAdminClient();
-  const { error } = await supabase.from("brands").insert({
-    name,
-    slug,
-    brand_color: brandColor,
-    description: description || null,
-    website: website || null,
-    status: "active",
-  });
+  const { data, error } = await supabase
+    .from("brands")
+    .insert({
+      name,
+      slug,
+      brand_color: brandColor,
+      description: description || null,
+      website: website || null,
+      status: "active",
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return {
@@ -129,6 +159,14 @@ export async function createBrand(
 
   revalidatePath("/");
   revalidatePath("/brands");
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: data?.id ?? null,
+    entityType: "brand",
+    entityLabel: "Brand",
+    action: "created",
+    subject: name,
+  });
 
   return {
     success: true,
@@ -202,6 +240,14 @@ export async function updateBrand(
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    entityType: "brand",
+    entityLabel: "Brand",
+    action: "edited",
+    subject: name,
+  });
 
   return {
     success: true,
@@ -217,6 +263,22 @@ export async function deleteBrand(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const brandResult = await supabase
+    .from("brands")
+    .select("name")
+    .eq("id", brandId)
+    .maybeSingle();
+  const brandName =
+    !brandResult.error && brandResult.data ? (brandResult.data.name as string) : "Brand";
+
+  await writeActivitySafe({
+    brandId,
+    entityType: "brand",
+    entityLabel: "Brand",
+    action: "deleted",
+    subject: brandName,
+  });
+
   const { error } = await supabase.from("brands").delete().eq("id", brandId);
 
   if (error) {
@@ -225,6 +287,7 @@ export async function deleteBrand(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/brands");
+  revalidateActivityViews();
   redirect("/brands");
 }
 
@@ -275,6 +338,16 @@ export async function createTask(
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    campaignId: relatedCampaignId || null,
+    entityType: "task",
+    entityLabel: "Task",
+    action: "created",
+    subject: title,
+    details: dueDate ? `Due ${dueDate}` : null,
+  });
 
   return {
     success: true,
@@ -291,6 +364,22 @@ export async function deleteTask(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const taskResult = await supabase
+    .from("tasks")
+    .select("brand_id, related_campaign_id, title")
+    .eq("id", taskId)
+    .maybeSingle();
+  const taskData = !taskResult.error ? taskResult.data : null;
+
+  await writeActivitySafe({
+    brandId: taskData?.brand_id ?? null,
+    campaignId: taskData?.related_campaign_id ?? null,
+    entityType: "task",
+    entityLabel: "Task",
+    action: "deleted",
+    subject: (taskData?.title as string | undefined) ?? "Task",
+  });
+
   const { error } = await supabase.from("tasks").delete().eq("id", taskId);
 
   if (error) {
@@ -300,6 +389,7 @@ export async function deleteTask(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
 }
 
 export async function updateTask(
@@ -330,6 +420,12 @@ export async function updateTask(
   }
 
   const supabase = createSupabaseAdminClient();
+  const existingTaskResult = await supabase
+    .from("tasks")
+    .select("brand_id, related_campaign_id")
+    .eq("id", taskId)
+    .maybeSingle();
+  const existingTaskData = !existingTaskResult.error ? existingTaskResult.data : null;
   const { error } = await supabase
     .from("tasks")
     .update({
@@ -352,6 +448,16 @@ export async function updateTask(
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingTaskData?.brand_id ?? null,
+    campaignId: relatedCampaignId || existingTaskData?.related_campaign_id || null,
+    entityType: "task",
+    entityLabel: "Task",
+    action: "updated",
+    subject: title,
+    details: dueDate ? `Due ${dueDate}` : null,
+  });
 
   return {
     success: true,
@@ -377,6 +483,12 @@ export async function updateTaskStatus(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const existingTaskResult = await supabase
+    .from("tasks")
+    .select("brand_id, related_campaign_id, title")
+    .eq("id", taskId)
+    .maybeSingle();
+  const existingTaskData = !existingTaskResult.error ? existingTaskResult.data : null;
   const { error } = await supabase
     .from("tasks")
     .update({ status })
@@ -389,6 +501,16 @@ export async function updateTaskStatus(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingTaskData?.brand_id ?? null,
+    campaignId: existingTaskData?.related_campaign_id ?? null,
+    entityType: "task",
+    entityLabel: "Task",
+    action: status === "done" ? "completed" : "updated",
+    subject: (existingTaskData?.title as string | undefined) ?? "Task",
+    details: `Marked ${humanizeSnakeCase(status)}`,
+  });
 }
 
 export async function createNote(
@@ -435,6 +557,14 @@ export async function createNote(
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    entityType: "note",
+    entityLabel: "Note",
+    action: "created",
+    subject: title || body.slice(0, 48),
+  });
 
   return {
     success: true,
@@ -451,6 +581,23 @@ export async function deleteNote(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const noteResult = await supabase
+    .from("notes")
+    .select("brand_id, title, body")
+    .eq("id", noteId)
+    .maybeSingle();
+  const noteData = !noteResult.error ? noteResult.data : null;
+
+  await writeActivitySafe({
+    brandId: noteData?.brand_id ?? null,
+    entityType: "note",
+    entityLabel: "Note",
+    action: "deleted",
+    subject:
+      (noteData?.title as string | undefined) ??
+      ((noteData?.body as string | undefined)?.slice(0, 48) ?? "Note"),
+  });
+
   const { error } = await supabase.from("notes").delete().eq("id", noteId);
 
   if (error) {
@@ -460,6 +607,7 @@ export async function deleteNote(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
 }
 
 export async function updateNote(
@@ -488,6 +636,12 @@ export async function updateNote(
   }
 
   const supabase = createSupabaseAdminClient();
+  const existingNoteResult = await supabase
+    .from("notes")
+    .select("brand_id")
+    .eq("id", noteId)
+    .maybeSingle();
+  const existingNoteData = !existingNoteResult.error ? existingNoteResult.data : null;
   const { error } = await supabase
     .from("notes")
     .update({
@@ -508,6 +662,14 @@ export async function updateNote(
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingNoteData?.brand_id ?? null,
+    entityType: "note",
+    entityLabel: "Note",
+    action: "updated",
+    subject: title || body.slice(0, 48),
+  });
 
   return {
     success: true,
@@ -564,6 +726,15 @@ export async function createContact(
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    entityType: "contact",
+    entityLabel: "Contact",
+    action: "created",
+    subject: name,
+    details: role || company || null,
+  });
 
   return {
     success: true,
@@ -600,6 +771,14 @@ export async function updateContact(
   }
 
   const supabase = createSupabaseAdminClient();
+  const existingContactResult = await supabase
+    .from("contacts")
+    .select("brand_id")
+    .eq("id", contactId)
+    .maybeSingle();
+  const existingContactData = !existingContactResult.error
+    ? existingContactResult.data
+    : null;
   const { error } = await supabase
     .from("contacts")
     .update({
@@ -622,6 +801,15 @@ export async function updateContact(
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingContactData?.brand_id ?? null,
+    entityType: "contact",
+    entityLabel: "Contact",
+    action: "updated",
+    subject: name,
+    details: role || company || null,
+  });
 
   return {
     success: true,
@@ -638,6 +826,21 @@ export async function deleteContact(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const contactResult = await supabase
+    .from("contacts")
+    .select("brand_id, name")
+    .eq("id", contactId)
+    .maybeSingle();
+  const contactData = !contactResult.error ? contactResult.data : null;
+
+  await writeActivitySafe({
+    brandId: contactData?.brand_id ?? null,
+    entityType: "contact",
+    entityLabel: "Contact",
+    action: "deleted",
+    subject: (contactData?.name as string | undefined) ?? "Contact",
+  });
+
   const { error } = await supabase.from("contacts").delete().eq("id", contactId);
 
   if (error) {
@@ -646,6 +849,7 @@ export async function deleteContact(formData: FormData) {
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
 }
 
 export async function createAsset(
@@ -745,6 +949,16 @@ export async function createAsset(
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    campaignId: relatedCampaignId || null,
+    entityType: "asset",
+    entityLabel: "Asset",
+    action: "created",
+    subject: title,
+    details: humanizeSnakeCase(assetType),
+  });
 
   return {
     success: true,
@@ -825,6 +1039,12 @@ export async function updateAsset(
   );
 
   const supabase = createSupabaseAdminClient();
+  const existingAssetResult = await supabase
+    .from("assets")
+    .select("brand_id, related_campaign_id")
+    .eq("id", assetId)
+    .maybeSingle();
+  const existingAssetData = !existingAssetResult.error ? existingAssetResult.data : null;
   const { error } = await supabase
     .from("assets")
     .update({
@@ -851,6 +1071,16 @@ export async function updateAsset(
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingAssetData?.brand_id ?? null,
+    campaignId: relatedCampaignId || existingAssetData?.related_campaign_id || null,
+    entityType: "asset",
+    entityLabel: "Asset",
+    action: "updated",
+    subject: title,
+    details: humanizeSnakeCase(assetType),
+  });
 
   return {
     success: true,
@@ -867,6 +1097,22 @@ export async function deleteAsset(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const assetResult = await supabase
+    .from("assets")
+    .select("brand_id, related_campaign_id, title")
+    .eq("id", assetId)
+    .maybeSingle();
+  const assetData = !assetResult.error ? assetResult.data : null;
+
+  await writeActivitySafe({
+    brandId: assetData?.brand_id ?? null,
+    campaignId: assetData?.related_campaign_id ?? null,
+    entityType: "asset",
+    entityLabel: "Asset",
+    action: "deleted",
+    subject: (assetData?.title as string | undefined) ?? "Asset",
+  });
+
   const { error } = await supabase.from("assets").delete().eq("id", assetId);
 
   if (error) {
@@ -875,6 +1121,7 @@ export async function deleteAsset(formData: FormData) {
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
 }
 
 export async function createUpcomingItem(
@@ -932,6 +1179,16 @@ export async function createUpcomingItem(
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    campaignId: relatedCampaignId || null,
+    entityType: "upcoming_item",
+    entityLabel: getUpcomingActivityLabel(type),
+    action: "created",
+    subject: title,
+    details: date,
+  });
 
   return {
     success: true,
@@ -948,6 +1205,24 @@ export async function deleteUpcomingItem(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const upcomingResult = await supabase
+    .from("upcoming_items")
+    .select("brand_id, related_campaign_id, title, type")
+    .eq("id", upcomingItemId)
+    .maybeSingle();
+  const upcomingData = !upcomingResult.error ? upcomingResult.data : null;
+
+  await writeActivitySafe({
+    brandId: upcomingData?.brand_id ?? null,
+    campaignId: upcomingData?.related_campaign_id ?? null,
+    entityType: "upcoming_item",
+    entityLabel: getUpcomingActivityLabel(
+      (upcomingData?.type as string | undefined) ?? "reminder",
+    ),
+    action: "deleted",
+    subject: (upcomingData?.title as string | undefined) ?? "Scheduled item",
+  });
+
   const { error } = await supabase
     .from("upcoming_items")
     .delete()
@@ -960,6 +1235,7 @@ export async function deleteUpcomingItem(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
 }
 
 export async function updateUpcomingItem(
@@ -997,6 +1273,14 @@ export async function updateUpcomingItem(
   }
 
   const supabase = createSupabaseAdminClient();
+  const existingUpcomingResult = await supabase
+    .from("upcoming_items")
+    .select("brand_id, related_campaign_id")
+    .eq("id", upcomingItemId)
+    .maybeSingle();
+  const existingUpcomingData = !existingUpcomingResult.error
+    ? existingUpcomingResult.data
+    : null;
   const { error } = await supabase
     .from("upcoming_items")
     .update({
@@ -1019,6 +1303,17 @@ export async function updateUpcomingItem(
   revalidatePath("/");
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingUpcomingData?.brand_id ?? null,
+    campaignId:
+      relatedCampaignId || existingUpcomingData?.related_campaign_id || null,
+    entityType: "upcoming_item",
+    entityLabel: getUpcomingActivityLabel(type),
+    action: status === "completed" ? "completed" : "updated",
+    subject: title,
+    details: `Status ${humanizeSnakeCase(status)}${date ? ` | ${date}` : ""}`,
+  });
 
   return {
     success: true,
@@ -1068,20 +1363,24 @@ export async function createCampaign(
   const parsedGoals = goals ? parseGoals(goals) : [];
 
   const supabase = createSupabaseAdminClient();
-  const { error } = await supabase.from("campaigns").insert({
-    brand_id: brandId,
-    title,
-    description: description || null,
-    status,
-    start_date: startDate || null,
-    end_date: endDate || null,
-    launch_date: launchDate || null,
-    goals: parsedGoals,
-    notes: notes || null,
-    content_ideas: contentIdeas || null,
-    links: links || null,
-    results_notes: resultsNotes || null,
-  });
+  const { data, error } = await supabase
+    .from("campaigns")
+    .insert({
+      brand_id: brandId,
+      title,
+      description: description || null,
+      status,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      launch_date: launchDate || null,
+      goals: parsedGoals,
+      notes: notes || null,
+      content_ideas: contentIdeas || null,
+      links: links || null,
+      results_notes: resultsNotes || null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return {
@@ -1092,6 +1391,16 @@ export async function createCampaign(
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    campaignId: data?.id ?? null,
+    entityType: "campaign",
+    entityLabel: "Campaign",
+    action: "created",
+    subject: title,
+    details: launchDate ? `Launch ${launchDate}` : null,
+  });
 
   return {
     success: true,
@@ -1139,6 +1448,14 @@ export async function updateCampaign(
   }
 
   const supabase = createSupabaseAdminClient();
+  const existingCampaignResult = await supabase
+    .from("campaigns")
+    .select("brand_id")
+    .eq("id", campaignId)
+    .maybeSingle();
+  const existingCampaignData = !existingCampaignResult.error
+    ? existingCampaignResult.data
+    : null;
   const { error } = await supabase
     .from("campaigns")
     .update({
@@ -1165,6 +1482,16 @@ export async function updateCampaign(
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingCampaignData?.brand_id ?? null,
+    campaignId,
+    entityType: "campaign",
+    entityLabel: "Campaign",
+    action: "updated",
+    subject: title,
+    details: launchDate ? `Launch ${launchDate}` : null,
+  });
 
   return {
     success: true,
@@ -1181,6 +1508,22 @@ export async function deleteCampaign(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const campaignResult = await supabase
+    .from("campaigns")
+    .select("brand_id, title")
+    .eq("id", campaignId)
+    .maybeSingle();
+  const campaignData = !campaignResult.error ? campaignResult.data : null;
+
+  await writeActivitySafe({
+    brandId: campaignData?.brand_id ?? null,
+    campaignId,
+    entityType: "campaign",
+    entityLabel: "Campaign",
+    action: "deleted",
+    subject: (campaignData?.title as string | undefined) ?? "Campaign",
+  });
+
   const { error } = await supabase.from("campaigns").delete().eq("id", campaignId);
 
   if (error) {
@@ -1189,6 +1532,7 @@ export async function deleteCampaign(formData: FormData) {
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
 }
 
 export async function completeCampaignObjective(
@@ -1206,6 +1550,12 @@ export async function completeCampaignObjective(
   }
 
   const supabase = createSupabaseAdminClient();
+  const campaignResult = await supabase
+    .from("campaigns")
+    .select("brand_id, title")
+    .eq("id", campaignId)
+    .maybeSingle();
+  const campaignData = !campaignResult.error ? campaignResult.data : null;
   const { error } = await supabase
     .from("campaigns")
     .update({
@@ -1223,6 +1573,15 @@ export async function completeCampaignObjective(
 
   revalidatePath("/brands");
   revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: campaignData?.brand_id ?? null,
+    campaignId,
+    entityType: "campaign",
+    entityLabel: "Campaign",
+    action: "completed",
+    subject: (campaignData?.title as string | undefined) ?? "Campaign",
+  });
 
   return {
     success: true,

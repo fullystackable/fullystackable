@@ -17,7 +17,7 @@ type ContactEditFormProps = {
 };
 
 export function ContactEditForm({ contact, brandSlug }: ContactEditFormProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
 

@@ -14,7 +14,7 @@ export function GlobalSearchForm({ compact = false }: GlobalSearchFormProps) {
   const hasQuery = currentQuery.trim().length > 0;
 
   return (
-    <form action="/search" className="flex w-full items-center gap-2">
+    <form action="/search" className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
       <label className="sr-only" htmlFor="global-search-input">
         Universal search
       </label>
@@ -29,14 +29,14 @@ export function GlobalSearchForm({ compact = false }: GlobalSearchFormProps) {
       />
       <button
         type="submit"
-        className="inline-flex h-10 shrink-0 items-center rounded-full bg-app-sidebar px-4 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+        className="inline-flex h-10 w-full shrink-0 items-center justify-center rounded-full bg-app-sidebar px-4 text-sm font-medium text-white hover:bg-app-sidebar-muted sm:w-auto"
       >
         Search
       </button>
       {pathname === "/search" && hasQuery ? (
         <Link
           href="/search"
-          className="inline-flex h-10 shrink-0 items-center rounded-full border border-app-line px-4 text-sm font-medium text-ink hover:bg-app-soft"
+          className="inline-flex h-10 w-full shrink-0 items-center justify-center rounded-full border border-app-line px-4 text-sm font-medium text-ink hover:bg-app-soft sm:w-auto"
         >
           Clear
         </Link>

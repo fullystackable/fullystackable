@@ -84,18 +84,20 @@ test.describe("brands directory", () => {
 
     try {
       await openBrandWorkspaceFromDirectory(page, brandName);
-      await page.getByRole("button", { name: "New task" }).click();
-
-      const taskCreateForm = page.locator("form").filter({
-        has: page.getByRole("button", { name: "Add task" }),
-      }).first();
+      const tasksSection = getWorkspaceSection(page, "tasks");
+      const taskCreateForm = await openSectionCreateForm(
+        tasksSection,
+        page,
+        "New task",
+        "Add task",
+      );
 
       await taskCreateForm.getByLabel("Task title").fill(taskTitle);
       await taskCreateForm.getByLabel("Due date").fill(dueDate);
       await taskCreateForm.getByLabel("Priority").selectOption("urgent");
       await taskCreateForm.getByRole("button", { name: "Add task" }).click();
 
-      await expect(page.getByText("Task added.")).toBeVisible();
+      await expect(taskCreateForm.getByText("Task added.")).toBeVisible();
 
       const getTaskCard = () =>
         page.getByRole("group", {
@@ -196,6 +198,7 @@ test.describe("brands directory", () => {
       ).toBeVisible();
 
       await page.reload();
+      await page.waitForLoadState("networkidle");
 
       const reloadedTaskCard = getTaskCard(page, initialTaskTitle);
 
@@ -273,6 +276,7 @@ test.describe("brands directory", () => {
       ).toBeVisible();
 
       await page.reload();
+      await page.waitForLoadState("networkidle");
 
       const reloadedAssetsSection = getWorkspaceSection(page, "assets");
       const reloadedAssetRow = getArticleByHeading(
@@ -364,6 +368,7 @@ test.describe("brands directory", () => {
       ).toBeVisible();
 
       await page.reload();
+      await page.waitForLoadState("networkidle");
 
       const reloadedUpcomingSection = getWorkspaceSection(page, "upcoming");
       const reloadedUpcomingRow = getArticleByHeading(
@@ -464,6 +469,7 @@ test.describe("brands directory", () => {
       await expect(initialContactRow.getByText("555-0101")).toBeVisible();
 
       await page.reload();
+      await page.waitForLoadState("networkidle");
 
       const reloadedContactsSection = getWorkspaceSection(page, "contacts");
       const reloadedContactRow = getArticleByHeading(
@@ -532,6 +538,7 @@ test.describe("brands directory", () => {
       await expect(initialNoteRow.getByText(initialNoteTitle)).toBeVisible();
 
       await page.reload();
+      await page.waitForLoadState("networkidle");
 
       const reloadedNotesSection = getWorkspaceSection(page, "notes");
       const reloadedNoteRow = getArticleByText(
@@ -672,7 +679,15 @@ async function openSectionCreateForm(
   await expect(toggleButton).toBeVisible();
   await toggleButton.click();
 
-  const form = page.locator("form").filter({ hasText: submitButtonName }).last();
+  const form = section.locator("form").filter({ hasText: submitButtonName }).first();
+
+  if (await form.isVisible().catch(() => false)) {
+    return form;
+  }
+
+  await expect(
+    section.getByRole("button", { name: "Hide form" }),
+  ).toBeVisible({ timeout: 10_000 });
   await expect(form).toBeVisible();
 
   return form;
@@ -699,14 +714,21 @@ async function openInlineEditForm(
   item: Locator,
   saveButtonName: string,
 ) {
+  const form = item.locator("form").filter({ hasText: saveButtonName }).first();
+
+  if (await form.isVisible().catch(() => false)) {
+    return form;
+  }
+
   const editButton = item.getByRole("button", { name: "Edit" }).first();
 
   await expect(editButton).toBeVisible();
   await editButton.click();
 
-  const form = page.locator("form").filter({ hasText: saveButtonName }).last();
-
-  if (!(await form.isVisible().catch(() => false))) {
+  if (
+    !(await form.isVisible().catch(() => false)) ||
+    (await editButton.isVisible().catch(() => false))
+  ) {
     await editButton.evaluate((button: HTMLButtonElement) => button.click());
   }
 
@@ -716,9 +738,11 @@ async function openInlineEditForm(
 }
 
 async function openWorkspaceTab(page: Page, tabName: string) {
-  const tabLink = page.getByRole("link", {
-    name: new RegExp(`^${tabName}(\\s+\\d+)?$`),
-  });
+  const tabLink = page
+    .getByRole("navigation", { name: "Workspace sections" })
+    .getByRole("link", {
+      name: new RegExp(`^${tabName}(\\s+\\d+)?$`),
+    });
 
   await expect(tabLink).toBeVisible();
   await tabLink.click();

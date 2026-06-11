@@ -75,7 +75,7 @@ export function WorkspaceControlBar({
 
       <form
         action={`/brands/${brandSlug}`}
-        className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_repeat(4,minmax(0,0.8fr))_auto]"
+        className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
         {activeTab !== "tasks" ? <input type="hidden" name="tab" value={activeTab} /> : null}
 
@@ -137,10 +137,10 @@ export function WorkspaceControlBar({
           </select>
         </label>
 
-        <div className="flex flex-wrap items-end gap-3 xl:col-span-full">
+        <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-3">
           <button
             type="submit"
-            className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            className="inline-flex items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
           >
             Apply view
           </button>

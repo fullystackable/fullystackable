@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { BrandColorBadge } from "@/components/BrandColorBadge";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Badge, Card, EmptyState, SectionHeader } from "@/components/ui";
@@ -192,7 +193,32 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card id="notes">
+        <Card id="activity">
+          <SectionHeader
+            eyebrow="Activity"
+            title="Recent activity"
+            description="A running memory of what changed most recently across the workspace."
+            action={
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge>{data.recentActivity.length}</Badge>
+                <Link
+                  href="/activity"
+                  className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+                >
+                  Open full log
+                </Link>
+              </div>
+            }
+          />
+          <div className="mt-6">
+            <ActivityFeed
+              items={data.recentActivity}
+              emptyDescription="As you create and update records, this feed will start remembering the sequence."
+            />
+          </div>
+        </Card>
+
+        <Card id="campaigns">
           <SectionHeader
             eyebrow="Notes"
             title="Recent notes"
@@ -214,8 +240,10 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             )}
           </div>
         </Card>
+      </section>
 
-        <Card>
+      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <Card id="campaigns">
           <SectionHeader
             eyebrow="Campaigns"
             title="Recent campaigns"
@@ -235,6 +263,32 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
                 description="Campaigns with dates will appear here once brands start planning launch windows."
               />
             )}
+          </div>
+        </Card>
+
+        <Card>
+          <SectionHeader
+            eyebrow="Memory"
+            title="Why this helps"
+            description="Activity history makes solo workflows easier to trust because the app can show what changed and in what order."
+          />
+          <div className="mt-6">
+            <div className="space-y-4">
+              <div className="app-subtle-card p-4">
+                <p className="text-sm font-semibold text-ink">Debug faster</p>
+                <p className="mt-2 text-sm leading-6 text-ink-muted">
+                  When something looks off, the feed shows whether a task, contact,
+                  asset, campaign, deadline, or brand record changed recently.
+                </p>
+              </div>
+              <div className="app-subtle-card p-4">
+                <p className="text-sm font-semibold text-ink">Keep context</p>
+                <p className="mt-2 text-sm leading-6 text-ink-muted">
+                  Even if you are the only user, the activity log gives the app a
+                  lightweight memory of recent operations.
+                </p>
+              </div>
+            </div>
           </div>
         </Card>
       </section>

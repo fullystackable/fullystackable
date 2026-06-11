@@ -22,7 +22,7 @@ export function BrandDirectoryFilters({
 }: BrandDirectoryFiltersProps) {
   return (
     <div className="mt-6 space-y-4">
-      <form action="/brands" className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_260px_auto]">
+      <form action="/brands" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_260px_auto]">
         <label className="space-y-2">
           <span className="text-sm font-medium text-ink">Search brands</span>
           <input
@@ -45,10 +45,10 @@ export function BrandDirectoryFilters({
           </select>
         </label>
 
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-1">
           <button
             type="submit"
-            className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            className="inline-flex items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
           >
             Apply filters
           </button>

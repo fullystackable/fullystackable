@@ -33,7 +33,7 @@ export function UpcomingList({
       {items.map((item) => (
         <article key={item.id} className="data-row">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-ink">{item.title}</h3>
               <p className="mt-1 text-sm text-ink-muted">
                 {formatWeekdayDate(item.date)} | {item.status}
@@ -44,7 +44,7 @@ export function UpcomingList({
                 </p>
               ) : null}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <Badge>{item.type}</Badge>
               {allowDelete && brandSlug ? (
                 <>

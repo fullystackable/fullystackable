@@ -72,7 +72,7 @@ export function UpcomingPlanner({
           compact
         />
 
-        <form action="/calendar" className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px_auto]">
+        <form action="/calendar" className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_260px_auto]">
           <label className="space-y-2">
             <span className="text-sm font-medium text-ink">View</span>
             <select name="view" defaultValue={view} className="app-input">
@@ -95,10 +95,10 @@ export function UpcomingPlanner({
             </select>
           </label>
 
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-1">
             <button
               type="submit"
-              className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+              className="inline-flex items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
             >
               Apply view
             </button>
@@ -195,7 +195,7 @@ function CalendarGrid({
   monthView: boolean;
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-7">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
       {days.map((day) => (
         <article
           key={day.date}

@@ -48,7 +48,7 @@ export function DashboardHeader({
         {meta ? <div className="mt-4 flex flex-wrap gap-2">{meta}</div> : null}
       </div>
       {action ? (
-        <div className="shrink-0 self-start lg:self-end">{action}</div>
+        <div className="w-full self-start lg:w-auto lg:shrink-0 lg:self-end">{action}</div>
       ) : null}
     </header>
   );

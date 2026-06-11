@@ -6,6 +6,7 @@ import {
   parseISODate,
   toISODate,
 } from "@/lib/date";
+import { getRecentActivityFeed, type ActivityFeedItem } from "@/lib/activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   humanizeSnakeCase,
@@ -129,6 +130,7 @@ export type GlobalDashboardData = {
   dueThisWeekTasks: DashboardTaskWithBrand[];
   overdueTasks: DashboardTaskWithBrand[];
   upcomingItems: DashboardUpcomingWithBrand[];
+  recentActivity: ActivityFeedItem[];
   recentAssets: DashboardAssetWithBrand[];
   recentNotes: WorkspaceNote[];
   recentCampaigns: DashboardCampaignWithBrand[];
@@ -164,6 +166,7 @@ function buildBrandLookup(brands: BrandRow[]) {
 export async function getGlobalDashboardData(
   baseDate: Date = new Date(),
 ): Promise<GlobalDashboardData> {
+  const recentActivityPromise = getRecentActivityFeed(8);
   const supabase = createSupabaseServerClient();
   const [
     brandsResult,
@@ -392,6 +395,7 @@ export async function getGlobalDashboardData(
     dueThisWeekTasks: dueThisWeekTasks.slice(0, 8),
     overdueTasks: overdueTasks.slice(0, 8),
     upcomingItems: upcomingItems.slice(0, 8),
+    recentActivity: await recentActivityPromise,
     recentAssets,
     recentNotes,
     recentCampaigns,

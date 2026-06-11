@@ -18,8 +18,8 @@ export function BrandCard({ brand }: BrandCardProps) {
         aria-label={`Brand card for ${brand.name}`}
         className="flex flex-col gap-4"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
               Brand
             </p>
@@ -27,7 +27,7 @@ export function BrandCard({ brand }: BrandCardProps) {
               {brand.name}
             </h2>
           </div>
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap gap-2 sm:justify-end">
             <BrandColorBadge color={brand.brandColor} label="Planner color" />
             <Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>
           </div>
@@ -40,7 +40,7 @@ export function BrandCard({ brand }: BrandCardProps) {
           </p>
         ) : null}
 
-        <dl className="grid grid-cols-3 gap-3 border-t border-app-line pt-4">
+        <dl className="grid grid-cols-2 gap-3 border-t border-app-line pt-4 sm:grid-cols-3">
           <div className="metric-tile border-t-0 pt-0">
             <dt className="text-xs uppercase tracking-[0.16em] text-ink-muted">
               Tasks
@@ -57,7 +57,7 @@ export function BrandCard({ brand }: BrandCardProps) {
               {brand.assetsCount}
             </dd>
           </div>
-          <div className="metric-tile border-t-0 pt-0">
+          <div className="metric-tile col-span-2 border-t-0 pt-0 sm:col-span-1">
             <dt className="text-xs uppercase tracking-[0.16em] text-ink-muted">
               Urgent
             </dt>
@@ -67,13 +67,13 @@ export function BrandCard({ brand }: BrandCardProps) {
           </div>
         </dl>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           {brand.website ? (
             <a
               href={brand.website}
               target="_blank"
               rel="noreferrer"
-              className="text-sm font-medium text-ink-muted hover:text-ink"
+              className="min-w-0 break-all text-sm font-medium text-ink-muted hover:text-ink"
             >
               {brand.website.replace(/^https?:\/\//, "")}
             </a>
@@ -82,7 +82,7 @@ export function BrandCard({ brand }: BrandCardProps) {
           )}
           <Link
             href={`/brands/${brand.slug}`}
-            className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            className="inline-flex w-full items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted sm:w-auto"
           >
             Open workspace
           </Link>

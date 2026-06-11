@@ -226,8 +226,8 @@ export function BrandWorkspace({
         activeTab={activeTab}
       />
 
-      <nav aria-label="Workspace sections" className="overflow-x-auto">
-        <div className="flex min-w-max gap-2 rounded-2xl border border-app-line bg-white/80 p-2">
+      <nav aria-label="Workspace sections" className="overflow-x-auto pb-1">
+        <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-app-line bg-white/80 p-2 sm:min-w-max sm:flex-nowrap">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
 
@@ -283,6 +283,7 @@ export function BrandWorkspace({
                 title="Add a campaign"
                 description="Group related work under one initiative before you start tying tasks and assets to it."
                 buttonLabel="New campaign"
+                alwaysVisible
               >
                 <CampaignCreateForm brandId={brand.id} brandSlug={brand.slug} />
               </ExpandablePanel>
@@ -310,6 +311,7 @@ export function BrandWorkspace({
                 title="Add a task"
                 description={`Keep the workspace current with new execution items as they appear. ${taskSectionSummary}`}
                 buttonLabel="New task"
+                alwaysVisible
               >
                 <TaskCreateForm
                   brandId={brand.id}
@@ -342,6 +344,7 @@ export function BrandWorkspace({
               title="Add an upcoming item"
               description="Keep launches, deadlines, meetings, and reminders visible without leaving the workspace."
               buttonLabel="New upcoming item"
+              alwaysVisible
             >
               <UpcomingCreateForm
                 brandId={brand.id}
@@ -374,6 +377,7 @@ export function BrandWorkspace({
               title="Add an asset"
               description="Start with the record, then attach links, storage paths, and notes around the work."
               buttonLabel="New asset"
+              alwaysVisible
             >
               <AssetCreateForm
                 brandId={brand.id}
@@ -406,6 +410,7 @@ export function BrandWorkspace({
               title="Add a contact"
               description="Keep the key people around this brand close to the work."
               buttonLabel="New contact"
+              alwaysVisible
             >
               <ContactCreateForm brandId={brand.id} brandSlug={brand.slug} />
             </ExpandablePanel>
@@ -431,6 +436,7 @@ export function BrandWorkspace({
               title="Add a note"
               description="Capture brand voice, reminders, and operating context while it is fresh."
               buttonLabel="New note"
+              alwaysVisible
             >
               <NoteCreateForm brandId={brand.id} brandSlug={brand.slug} />
             </ExpandablePanel>

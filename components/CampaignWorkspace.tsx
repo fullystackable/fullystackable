@@ -81,8 +81,8 @@ export function CampaignWorkspace({
         ) : null}
       </Card>
 
-      <nav aria-label="Campaign sections" className="overflow-x-auto">
-        <div className="flex min-w-max gap-2 rounded-2xl border border-app-line bg-white/80 p-2">
+      <nav aria-label="Campaign sections" className="overflow-x-auto pb-1">
+        <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-app-line bg-white/80 p-2 sm:min-w-max sm:flex-nowrap">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
 

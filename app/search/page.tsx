@@ -135,7 +135,7 @@ function SearchResultRow({ result }: { result: UniversalSearchResult }) {
           {title}
           <p className="mt-2 text-sm text-ink-muted">{result.meta}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           <Badge>{result.badge}</Badge>
           {!result.externalHref ? (
             <Link
