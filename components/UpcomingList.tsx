@@ -1,4 +1,5 @@
 import { deleteUpcomingItem } from "@/app/actions/workspace";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { UpcomingEditForm } from "@/components/UpcomingEditForm";
 import { Badge, EmptyState } from "@/components/ui";
 import { formatWeekdayDate } from "@/lib/date";
@@ -46,27 +47,26 @@ export function UpcomingList({
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <Badge>{item.type}</Badge>
-              {allowDelete && brandSlug ? (
-                <>
-                  <UpcomingEditForm
-                    item={item}
-                    brandSlug={brandSlug}
-                    campaigns={campaigns}
-                  />
-                  <form action={deleteUpcomingItem}>
-                    <input type="hidden" name="upcomingItemId" value={item.id} />
-                    <input type="hidden" name="brandSlug" value={brandSlug} />
-                    <button
-                      type="submit"
-                      className="text-sm font-medium text-danger hover:opacity-80"
-                    >
-                      Remove
-                    </button>
-                  </form>
-                </>
-              ) : null}
             </div>
           </div>
+          {allowDelete && brandSlug ? (
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+              <UpcomingEditForm
+                item={item}
+                brandSlug={brandSlug}
+                campaigns={campaigns}
+              />
+              <form action={deleteUpcomingItem}>
+                <input type="hidden" name="upcomingItemId" value={item.id} />
+                <input type="hidden" name="brandSlug" value={brandSlug} />
+                <ConfirmSubmitButton
+                  idleLabel="Remove"
+                  confirmLabel="Remove item"
+                  confirmPrompt="Remove this item?"
+                />
+              </form>
+            </div>
+          ) : null}
           {item.notes ? (
             <p className="mt-3 text-sm leading-6 text-ink-muted">{item.notes}</p>
           ) : null}

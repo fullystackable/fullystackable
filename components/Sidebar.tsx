@@ -77,8 +77,8 @@ export function Sidebar() {
           <Badge tone="sidebar">MVP</Badge>
         </div>
 
-        <nav className="mt-4 lg:mt-6">
-          <div className="flex flex-wrap gap-2 lg:flex-col">
+        <nav className="mt-4 overflow-x-auto pb-1 lg:mt-6 lg:overflow-visible lg:pb-0">
+          <div className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col">
             {primaryNav.map((item) => {
               const isActive = item.match?.(pathname) ?? pathname === item.href;
 
@@ -100,12 +100,17 @@ export function Sidebar() {
           </div>
         </nav>
 
-        <div className="mt-5 lg:mt-8">
+        <div className={cx("mt-5 lg:mt-8", isBrandWorkspace ? "" : "hidden lg:block")}>
           <p className="px-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/40">
             Workspace
           </p>
-          <nav className="mt-3">
-            <div className="flex flex-wrap gap-2 lg:flex-col">
+          <p className="mt-2 px-1 text-sm text-white/60">
+            {isBrandWorkspace
+              ? "Jump around this brand workspace."
+              : "Quick links into the main operating views."}
+          </p>
+          <nav className="mt-3 overflow-x-auto pb-1 lg:overflow-visible lg:pb-0">
+            <div className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col">
               {workspaceNav.map((item) => {
                 const isActive = isBrandWorkspace
                   ? activeWorkspaceTab === item.tab

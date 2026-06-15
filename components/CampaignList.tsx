@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { deleteCampaign } from "@/app/actions/workspace";
 import { CampaignEditForm } from "@/components/CampaignEditForm";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { Badge, EmptyState } from "@/components/ui";
 import { formatShortDate } from "@/lib/date";
 import { buildCampaignWorkspaceHref } from "@/lib/workspace-url-state";
@@ -34,7 +35,7 @@ export function CampaignList({
       {campaigns.map((campaign) => (
         <article key={campaign.id} className="data-row">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-ink">
                 {brandSlug ? (
                   <Link
@@ -57,29 +58,28 @@ export function CampaignList({
               {activeCampaignId === campaign.id ? (
                 <Badge tone="accent">Focused</Badge>
               ) : null}
-              {allowDelete && brandSlug ? (
-                <>
-                  <Link
-                    href={buildCampaignWorkspaceHref(brandSlug, campaign.id)}
-                    className="text-sm font-medium text-ink-muted hover:text-ink"
-                  >
-                    Open
-                  </Link>
-                  <CampaignEditForm campaign={campaign} brandSlug={brandSlug} />
-                  <form action={deleteCampaign}>
-                    <input type="hidden" name="campaignId" value={campaign.id} />
-                    <input type="hidden" name="brandSlug" value={brandSlug} />
-                    <button
-                      type="submit"
-                      className="text-sm font-medium text-danger hover:opacity-80"
-                    >
-                      Remove
-                    </button>
-                  </form>
-                </>
-              ) : null}
             </div>
           </div>
+          {allowDelete && brandSlug ? (
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+              <Link
+                href={buildCampaignWorkspaceHref(brandSlug, campaign.id)}
+                className="inline-flex min-h-11 items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+              >
+                Open
+              </Link>
+              <CampaignEditForm campaign={campaign} brandSlug={brandSlug} />
+              <form action={deleteCampaign}>
+                <input type="hidden" name="campaignId" value={campaign.id} />
+                <input type="hidden" name="brandSlug" value={brandSlug} />
+                <ConfirmSubmitButton
+                  idleLabel="Remove"
+                  confirmLabel="Remove campaign"
+                  confirmPrompt="Remove this campaign?"
+                />
+              </form>
+            </div>
+          ) : null}
           {campaign.description ? (
             <p className="mt-3 text-sm leading-6 text-ink-muted">
               {campaign.description}

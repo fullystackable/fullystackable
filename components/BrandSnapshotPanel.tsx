@@ -77,7 +77,7 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
               href={brand.website}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex text-sm font-medium text-accent hover:text-app-sidebar"
+              className="inline-flex min-w-0 break-all text-sm font-medium text-accent hover:text-app-sidebar"
             >
               {brand.website}
             </a>

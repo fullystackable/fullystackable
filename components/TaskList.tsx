@@ -7,6 +7,7 @@ import {
 import { getDueDateTone, taskPriorityTones, taskStatusTones } from "@/lib/design";
 import type { WorkspaceCampaign, WorkspaceTask } from "@/lib/workspace-view";
 import { deleteTask, updateTaskStatus } from "@/app/actions/workspace";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { TaskEditForm } from "@/components/TaskEditForm";
 
 type TaskListProps = {
@@ -75,7 +76,7 @@ export function TaskList({
                     <input type="hidden" name="status" value={action.status} />
                     <button
                       type="submit"
-                      className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+                      className="inline-flex min-h-11 items-center rounded-full border border-app-line px-3 py-2 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
                     >
                       {action.label}
                     </button>
@@ -91,12 +92,11 @@ export function TaskList({
                 <form action={deleteTask}>
                   <input type="hidden" name="taskId" value={task.id} />
                   <input type="hidden" name="brandSlug" value={brandSlug} />
-                  <button
-                    type="submit"
-                    className="text-sm font-medium text-danger hover:opacity-80"
-                  >
-                    Remove
-                  </button>
+                  <ConfirmSubmitButton
+                    idleLabel="Remove"
+                    confirmLabel="Remove task"
+                    confirmPrompt="Remove this task?"
+                  />
                 </form>
               </div>
             </div>

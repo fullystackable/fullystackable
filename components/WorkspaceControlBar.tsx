@@ -31,6 +31,7 @@ type WorkspaceControlBarProps = {
   assetsCount: number;
   upcomingCount: number;
   activeTab: WorkspaceTab;
+  hasInvalidCampaignFocus: boolean;
 };
 
 export function WorkspaceControlBar({
@@ -48,6 +49,7 @@ export function WorkspaceControlBar({
   assetsCount,
   upcomingCount,
   activeTab,
+  hasInvalidCampaignFocus,
 }: WorkspaceControlBarProps) {
   return (
     <section className="app-card p-4 sm:p-5">
@@ -61,6 +63,8 @@ export function WorkspaceControlBar({
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-ink-muted">
             Keep the workspace focused without opening a stack of extra panels.
+            Your current view lives in the URL, so refreshes and deep links stay
+            stable.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -69,6 +73,9 @@ export function WorkspaceControlBar({
           <Badge>{upcomingCount} upcoming</Badge>
           {activeCampaignTitle ? (
             <Badge tone="accent">{activeCampaignTitle}</Badge>
+          ) : null}
+          {hasInvalidCampaignFocus ? (
+            <Badge tone="warning">Focus removed</Badge>
           ) : null}
         </div>
       </div>
@@ -140,7 +147,7 @@ export function WorkspaceControlBar({
         <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-3">
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
           >
             Apply view
           </button>
@@ -155,7 +162,7 @@ export function WorkspaceControlBar({
                 density,
                 activeTab,
               )}
-              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+              className="inline-flex min-h-11 items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
             >
               Clear focus
             </Link>
@@ -163,7 +170,7 @@ export function WorkspaceControlBar({
           {hasCustomSettings ? (
             <Link
               href={buildWorkspaceResetHref(brandSlug, activeCampaignId, activeTab)}
-              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+              className="inline-flex min-h-11 items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
             >
               Reset
             </Link>

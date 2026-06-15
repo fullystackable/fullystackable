@@ -51,7 +51,7 @@ export function BrandEditForm({
       <button
         type="button"
         onClick={() => setIsEditing(true)}
-        className="text-sm font-medium text-ink-muted hover:text-ink"
+        className="inline-flex min-h-11 items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
       >
         {buttonLabel}
       </button>
@@ -241,7 +241,7 @@ export function BrandEditForm({
           <button
             type="button"
             onClick={() => setIsEditing(false)}
-            className="text-sm font-medium text-ink-muted hover:text-ink"
+            className="inline-flex min-h-11 items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
           >
             Cancel
           </button>

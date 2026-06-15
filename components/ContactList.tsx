@@ -1,4 +1,5 @@
 import { deleteContact } from "@/app/actions/workspace";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { ContactEditForm } from "@/components/ContactEditForm";
 import { Badge, EmptyState } from "@/components/ui";
 import type { WorkspaceContact } from "@/lib/workspace-view";
@@ -28,7 +29,7 @@ export function ContactList({
       {contacts.map((contact) => (
         <article key={contact.id} className="data-row">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-ink">{contact.name}</h3>
               <p className="mt-1 text-sm text-ink-muted">
                 {[contact.role, contact.company].filter(Boolean).join(" | ") || "No role added"}
@@ -36,32 +37,36 @@ export function ContactList({
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge>{contact.contactType}</Badge>
-              {allowDelete && brandSlug ? (
-                <>
-                  <ContactEditForm contact={contact} brandSlug={brandSlug} />
-                  <form action={deleteContact}>
-                    <input type="hidden" name="contactId" value={contact.id} />
-                    <input type="hidden" name="brandSlug" value={brandSlug} />
-                    <button
-                      type="submit"
-                      className="text-sm font-medium text-danger hover:opacity-80"
-                    >
-                      Remove
-                    </button>
-                  </form>
-                </>
-              ) : null}
             </div>
           </div>
+          {allowDelete && brandSlug ? (
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+              <ContactEditForm contact={contact} brandSlug={brandSlug} />
+              <form action={deleteContact}>
+                <input type="hidden" name="contactId" value={contact.id} />
+                <input type="hidden" name="brandSlug" value={brandSlug} />
+                <ConfirmSubmitButton
+                  idleLabel="Remove"
+                  confirmLabel="Remove contact"
+                  confirmPrompt="Remove this contact?"
+                />
+              </form>
+            </div>
+          ) : null}
           {contact.email ? (
             <a
               href={`mailto:${contact.email}`}
-              className="mt-3 inline-flex text-sm font-medium text-accent hover:text-app-sidebar"
+              className="mt-3 inline-flex min-w-0 break-all text-sm font-medium text-accent hover:text-app-sidebar"
             >
               {contact.email}
             </a>
           ) : contact.phone ? (
-            <p className="mt-3 text-sm font-medium text-ink-muted">{contact.phone}</p>
+            <a
+              href={`tel:${contact.phone}`}
+              className="mt-3 inline-flex text-sm font-medium text-accent hover:text-app-sidebar"
+            >
+              {contact.phone}
+            </a>
           ) : (
             <p className="mt-3 text-sm font-medium text-ink-muted">
               No direct contact info added

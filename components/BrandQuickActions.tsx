@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   completeCampaignObjective,
@@ -50,7 +50,7 @@ export function BrandQuickActions({ brand }: BrandQuickActionsProps) {
             type="button"
             onClick={() => setActiveTab(tab.id)}
             className={cx(
-              "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-sm font-medium",
+              "inline-flex min-h-11 items-center justify-center rounded-full px-3 py-2 text-sm font-medium",
               activeTab === tab.id
                 ? "bg-app-sidebar text-white"
                 : "border border-app-line bg-white text-ink-muted hover:bg-app-soft hover:text-ink",
@@ -72,13 +72,20 @@ export function BrandQuickActions({ brand }: BrandQuickActionsProps) {
 
 function QuickTaskForm({ brand }: BrandQuickActionsProps) {
   const [state, formAction] = useActionState(createTask, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
   const campaignOptions = useMemo(
     () => brand.campaigns.filter((campaign) => campaign.statusValue !== "completed"),
     [brand.campaigns],
   );
 
+  useEffect(() => {
+    if (state.success) {
+      formRef.current?.reset();
+    }
+  }, [state.success]);
+
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-4">
       <input type="hidden" name="brandId" value={brand.id} />
       <input type="hidden" name="brandSlug" value={brand.slug} />
 
@@ -140,13 +147,20 @@ function QuickTaskForm({ brand }: BrandQuickActionsProps) {
 
 function QuickDeadlineForm({ brand }: BrandQuickActionsProps) {
   const [state, formAction] = useActionState(createUpcomingItem, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
   const campaignOptions = useMemo(
     () => brand.campaigns.filter((campaign) => campaign.statusValue !== "completed"),
     [brand.campaigns],
   );
 
+  useEffect(() => {
+    if (state.success) {
+      formRef.current?.reset();
+    }
+  }, [state.success]);
+
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-4">
       <input type="hidden" name="brandId" value={brand.id} />
       <input type="hidden" name="brandSlug" value={brand.slug} />
       <input type="hidden" name="type" value="deadline" />

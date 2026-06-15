@@ -160,6 +160,8 @@ const sectionOrder: Array<{ type: SearchResultType; title: string }> = [
   { type: "links", title: "Links" },
 ];
 
+const searchResultSeparator = " \u2022 ";
+
 function includesNormalizedQuery(value: string | null | undefined, query: string) {
   return value?.toLowerCase().includes(query) ?? false;
 }
@@ -174,6 +176,10 @@ function truncateText(value: string, maxLength: number) {
   }
 
   return `${value.slice(0, maxLength - 3).trimEnd()}...`;
+}
+
+function joinDescriptionParts(parts: Array<string | null | undefined>) {
+  return parts.filter(Boolean).join(searchResultSeparator);
 }
 
 function buildBrandLookup(brands: BrandRow[]) {
@@ -509,14 +515,12 @@ export async function getUniversalSearchData(
         type: "contacts",
         title: contact.name,
         description: truncateText(
-          [
+          joinDescriptionParts([
             [contact.role, contact.company].filter(Boolean).join(" | "),
             contact.email,
             contact.phone,
             contact.notes,
-          ]
-            .filter(Boolean)
-            .join(" • ") || "Contact match.",
+          ]) || "Contact match.",
           160,
         ),
         href: buildWorkspaceViewHref(brand.slug, {

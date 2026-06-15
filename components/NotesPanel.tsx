@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { deleteNote } from "@/app/actions/workspace";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { NoteEditForm } from "@/components/NoteEditForm";
 import { Badge, Card, EmptyState, SectionHeader } from "@/components/ui";
 import { formatShortDate } from "@/lib/date";
@@ -70,38 +71,39 @@ export function NotesPanel({
                       </Badge>
                     ) : null}
                     <Badge>{formatShortDate(note.createdAt)}</Badge>
-                    {allowDelete && brandSlug ? (
-                      <>
-                        <NoteEditForm
-                          note={{
-                            id: note.id,
-                            title: note.title ?? null,
-                            text: note.text,
-                            createdAt: note.createdAt,
-                            category: note.category ?? "Random",
-                            categoryValue: note.categoryValue,
-                            pinned: note.pinned ?? false,
-                          }}
-                          brandSlug={brandSlug}
-                        />
-                        <form action={deleteNote}>
-                          <input type="hidden" name="noteId" value={note.id} />
-                          <input type="hidden" name="brandSlug" value={brandSlug} />
-                          <button
-                            type="submit"
-                            className="text-sm font-medium text-danger hover:opacity-80"
-                          >
-                            Remove
-                          </button>
-                        </form>
-                      </>
-                    ) : null}
                   </div>
                 </div>
+                {allowDelete && brandSlug ? (
+                  <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+                    <NoteEditForm
+                      note={{
+                        id: note.id,
+                        title: note.title ?? null,
+                        text: note.text,
+                        createdAt: note.createdAt,
+                        category: note.category ?? "Random",
+                        categoryValue: note.categoryValue,
+                        pinned: note.pinned ?? false,
+                      }}
+                      brandSlug={brandSlug}
+                    />
+                    <form action={deleteNote}>
+                      <input type="hidden" name="noteId" value={note.id} />
+                      <input type="hidden" name="brandSlug" value={brandSlug} />
+                      <ConfirmSubmitButton
+                        idleLabel="Remove"
+                        confirmLabel="Remove note"
+                        confirmPrompt="Remove this note?"
+                      />
+                    </form>
+                  </div>
+                ) : null}
                 {note.title ? (
                   <p className="mt-3 text-sm font-semibold text-ink">{note.title}</p>
                 ) : null}
-                <p className="mt-3 text-sm leading-6 text-ink-muted">{note.text}</p>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink-muted">
+                  {note.text}
+                </p>
               </article>
             ))}
           </div>

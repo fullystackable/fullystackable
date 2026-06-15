@@ -218,7 +218,7 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
           </div>
         </Card>
 
-        <Card id="campaigns">
+        <Card id="notes">
           <SectionHeader
             eyebrow="Notes"
             title="Recent notes"

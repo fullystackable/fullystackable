@@ -48,14 +48,14 @@ export function BrandDirectoryFilters({
         <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-1">
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
           >
             Apply filters
           </button>
           {hasFilters ? (
             <Link
               href="/brands"
-              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+              className="inline-flex min-h-11 items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
             >
               Clear
             </Link>

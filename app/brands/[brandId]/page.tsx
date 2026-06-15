@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { deleteBrand } from "@/app/actions/workspace";
 import { BrandColorBadge } from "@/components/BrandColorBadge";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { BrandWorkspace } from "@/components/BrandWorkspace";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Badge } from "@/components/ui";
@@ -134,6 +135,9 @@ export default async function BrandPage({
     brand.campaigns.find(
       (campaign) => campaign.id === resolvedSearchParams.campaign,
     ) ?? null;
+  const hadInvalidCampaignFocus = Boolean(
+    resolvedSearchParams.campaign && !activeCampaign,
+  );
   const taskSort = normalizeTaskSort(resolvedSearchParams.taskSort);
   const taskView = normalizeTaskView(resolvedSearchParams.taskView);
   const assetSort = normalizeAssetSort(resolvedSearchParams.assetSort);
@@ -167,12 +171,11 @@ export default async function BrandPage({
             ) : null}
             <form action={deleteBrand}>
               <input type="hidden" name="brandId" value={brand.id} />
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-full bg-danger px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-              >
-                Delete brand
-              </button>
+              <ConfirmSubmitButton
+                idleLabel="Delete brand"
+                confirmLabel="Delete permanently"
+                confirmPrompt="Delete this brand?"
+              />
             </form>
           </div>
         }
@@ -186,6 +189,7 @@ export default async function BrandPage({
         upcomingSort={upcomingSort}
         density={density}
         activeTab={activeTab}
+        hadInvalidCampaignFocus={hadInvalidCampaignFocus}
       />
     </div>
   );

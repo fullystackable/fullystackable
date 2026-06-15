@@ -1,5 +1,6 @@
 import { deleteAsset } from "@/app/actions/workspace";
 import { AssetEditForm } from "@/components/AssetEditForm";
+import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { Badge, EmptyState } from "@/components/ui";
 import { assetCategoryTones } from "@/lib/assets";
 import { formatShortDate } from "@/lib/date";
@@ -43,7 +44,7 @@ export function AssetList({
       {assets.map((asset) => (
         <article key={asset.id} className="data-row">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <h3 className="text-base font-semibold text-ink">{asset.title}</h3>
               <p className="mt-1 text-sm text-ink-muted">
                 {asset.category} | {asset.type} | {asset.sourceType} | Updated{" "}
@@ -62,27 +63,26 @@ export function AssetList({
               <Badge>{asset.type}</Badge>
               <Badge>{asset.status}</Badge>
               <Badge>{asset.priority}</Badge>
-              {allowDelete && brandSlug ? (
-                <>
-                  <AssetEditForm
-                    asset={asset}
-                    brandSlug={brandSlug}
-                    campaigns={campaigns}
-                  />
-                  <form action={deleteAsset}>
-                    <input type="hidden" name="assetId" value={asset.id} />
-                    <input type="hidden" name="brandSlug" value={brandSlug} />
-                    <button
-                      type="submit"
-                      className="text-sm font-medium text-danger hover:opacity-80"
-                    >
-                      Remove
-                    </button>
-                  </form>
-                </>
-              ) : null}
             </div>
           </div>
+          {allowDelete && brandSlug ? (
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+              <AssetEditForm
+                asset={asset}
+                brandSlug={brandSlug}
+                campaigns={campaigns}
+              />
+              <form action={deleteAsset}>
+                <input type="hidden" name="assetId" value={asset.id} />
+                <input type="hidden" name="brandSlug" value={brandSlug} />
+                <ConfirmSubmitButton
+                  idleLabel="Remove"
+                  confirmLabel="Remove asset"
+                  confirmPrompt="Remove this asset?"
+                />
+              </form>
+            </div>
+          ) : null}
           {asset.description ? (
             <p className="mt-3 text-sm leading-6 text-ink-muted">{asset.description}</p>
           ) : null}
@@ -94,7 +94,7 @@ export function AssetList({
               href={asset.url}
               target="_blank"
               rel="noreferrer"
-              className="mt-3 inline-flex items-center text-sm font-medium text-accent hover:text-app-sidebar"
+              className="mt-3 inline-flex min-w-0 items-center break-all text-sm font-medium text-accent hover:text-app-sidebar"
             >
               {getAssetAccessCopy(asset)}
             </a>

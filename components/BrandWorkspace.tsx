@@ -38,6 +38,7 @@ type BrandWorkspaceProps = {
   upcomingSort?: "date_asc" | "type" | "status" | "title";
   density?: WorkspaceDensity;
   activeTab?: WorkspaceTab;
+  hadInvalidCampaignFocus?: boolean;
 };
 
 type WorkspaceTabConfig = {
@@ -55,6 +56,7 @@ export function BrandWorkspace({
   upcomingSort = "date_asc",
   density = "comfortable",
   activeTab = "tasks",
+  hadInvalidCampaignFocus = false,
 }: BrandWorkspaceProps) {
   const isCompact = density === "compact";
   const activeCampaign =
@@ -209,6 +211,23 @@ export function BrandWorkspace({
     >
       <BrandSnapshotPanel brand={brand} />
 
+      {hadInvalidCampaignFocus ? (
+        <Card>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-ink">
+                Campaign focus cleared
+              </p>
+              <p className="mt-1 text-sm leading-6 text-ink-muted">
+                The previously focused campaign is no longer available, so this
+                workspace is showing all brand records again.
+              </p>
+            </div>
+            <Badge tone="warning">Showing all campaigns</Badge>
+          </div>
+        </Card>
+      ) : null}
+
       <WorkspaceControlBar
         brandSlug={brand.slug}
         campaigns={campaignOptions}
@@ -224,6 +243,7 @@ export function BrandWorkspace({
         assetsCount={visibleAssets.length}
         upcomingCount={visibleUpcoming.length}
         activeTab={activeTab}
+        hasInvalidCampaignFocus={hadInvalidCampaignFocus}
       />
 
       <nav aria-label="Workspace sections" className="overflow-x-auto pb-1">
