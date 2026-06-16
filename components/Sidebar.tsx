@@ -24,6 +24,11 @@ const primaryNav: NavItem[] = [
     match: (pathname) => pathname === "/" || pathname === "/dashboard",
   },
   {
+    label: "Today",
+    href: "/today",
+    match: (pathname) => pathname.startsWith("/today"),
+  },
+  {
     label: "Brands",
     href: "/brands",
     match: (pathname) => pathname.startsWith("/brands"),
@@ -134,15 +139,15 @@ export function Sidebar() {
 
         <div className="mt-auto hidden pt-8 lg:block">
           <div className="rounded-3xl border border-app-sidebar-line bg-app-sidebar-muted px-4 py-4">
-            <p className="text-sm font-semibold text-white">Mock-data workspace</p>
+            <p className="text-sm font-semibold text-white">Personal command center</p>
             <p className="mt-2 text-sm leading-6 text-white/60">
-              A compact operating layer for marketers managing multiple brands at
-              once.
+              Keep your most important brands, tasks, assets, and deadlines close
+              without turning the MVP into a heavier system.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Badge tone="sidebar">6 brands</Badge>
+              <Badge tone="sidebar">Pinned brands</Badge>
               <Badge tone="sidebar">Tasks</Badge>
-              <Badge tone="sidebar">Assets</Badge>
+              <Badge tone="sidebar">Quick links</Badge>
             </div>
           </div>
         </div>

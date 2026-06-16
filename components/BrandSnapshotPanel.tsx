@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
 import { BrandColorBadge } from "@/components/BrandColorBadge";
+import { BrandReadinessSummary } from "@/components/BrandReadinessSummary";
+import { QuickLinksList } from "@/components/QuickLinksList";
 import { Badge, Card, SectionHeader } from "@/components/ui";
 import {
   compareDateStrings,
@@ -51,7 +53,7 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
       <SectionHeader
         eyebrow="Snapshot"
         title="Brand snapshot"
-        description="A quick operating read on the brand's current status, work volume, and latest movement."
+        description="A quick operating read on the brand's current status, work volume, setup health, and latest movement."
         action={
           <div className="flex flex-wrap gap-2">
             <BrandColorBadge color={brand.brandColor} label="Workspace color" />
@@ -150,6 +152,19 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
           ) : (
             <p className="text-sm text-ink-muted">No recent note or campaign activity</p>
           )}
+        </InfoTile>
+
+        <InfoTile label="Workspace readiness">
+          <BrandReadinessSummary readiness={brand.readiness} compact />
+        </InfoTile>
+
+        <InfoTile label="Quick links">
+          <QuickLinksList
+            links={brand.quickLinks}
+            compact
+            emptyTitle="No quick links yet"
+            emptyDescription="Pin the URLs you open most often from the assets section."
+          />
         </InfoTile>
       </div>
     </Card>
@@ -281,5 +296,5 @@ function truncateText(value: string, maxLength: number) {
     return value;
   }
 
-  return `${value.slice(0, maxLength - 1).trimEnd()}…`;
+  return `${value.slice(0, maxLength - 1).trimEnd()}\u2026`;
 }

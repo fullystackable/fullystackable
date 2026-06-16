@@ -22,6 +22,16 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
   const [message, setMessage] = useState("");
   const [wasSuccessful, setWasSuccessful] = useState(false);
 
+  function handleTextareaKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      (event.key === "Enter" || event.key === "NumpadEnter")
+    ) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  }
+
   if (!isEditing) {
     return (
       <>
@@ -104,10 +114,14 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
           rows={4}
           defaultValue={note.text}
           className="app-input min-h-28 resize-y"
+          onKeyDown={handleTextareaKeyDown}
         />
       </label>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-muted">
+          Press Ctrl/Cmd + Enter to save.
+        </p>
         <button
           type="button"
           onClick={() => setIsEditing(false)}

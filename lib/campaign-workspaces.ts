@@ -85,6 +85,7 @@ type AssetRow = {
   description: string | null;
   notes: string | null;
   updated_at: string;
+  is_quick_link: boolean;
 };
 
 type UpcomingItemRow = {
@@ -147,7 +148,7 @@ export async function getCampaignWorkspaceById(
       supabase
         .from("assets")
         .select(
-          "id, related_campaign_id, title, asset_category, asset_type, source_type, status, priority, url, storage_path, description, notes, updated_at",
+          "id, related_campaign_id, title, asset_category, asset_type, source_type, status, priority, url, storage_path, description, notes, updated_at, is_quick_link",
         )
         .eq("brand_id", brand.id)
         .eq("related_campaign_id", campaignId)
@@ -261,6 +262,7 @@ export async function getCampaignWorkspaceById(
       description: asset.description,
       notes: asset.notes,
       updatedAt: toISODateOnly(asset.updated_at) ?? asset.updated_at,
+      isQuickLink: asset.is_quick_link,
     })),
     upcoming: ((upcomingResult.data ?? []) as UpcomingItemRow[]).map((item) => ({
       id: item.id,

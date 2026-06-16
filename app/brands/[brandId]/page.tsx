@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { deleteBrand } from "@/app/actions/workspace";
 import { BrandColorBadge } from "@/components/BrandColorBadge";
+import { BrandPinToggleForm } from "@/components/BrandPinToggleForm";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { BrandWorkspace } from "@/components/BrandWorkspace";
 import { DashboardHeader } from "@/components/DashboardHeader";
@@ -159,6 +160,7 @@ export default async function BrandPage({
         }
         action={
           <div className="flex flex-wrap gap-3">
+            <BrandPinToggleForm brandId={brand.id} isPinned={brand.isPinned} />
             {brand.website ? (
               <a
                 href={brand.website}

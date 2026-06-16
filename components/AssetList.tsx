@@ -60,6 +60,7 @@ export function AssetList({
               <Badge tone={assetCategoryTones[asset.categoryValue]}>
                 {asset.category}
               </Badge>
+              {asset.isQuickLink ? <Badge tone="accent">Quick link</Badge> : null}
               <Badge>{asset.type}</Badge>
               <Badge>{asset.status}</Badge>
               <Badge>{asset.priority}</Badge>

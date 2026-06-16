@@ -2,7 +2,9 @@ import Link from "next/link";
 
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { BrandColorBadge } from "@/components/BrandColorBadge";
+import { BrandReadinessSummary } from "@/components/BrandReadinessSummary";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import { QuickLinksList } from "@/components/QuickLinksList";
 import { Badge, Card, EmptyState, SectionHeader } from "@/components/ui";
 import {
   formatShortDate,
@@ -12,6 +14,7 @@ import {
 import type {
   DashboardAssetWithBrand,
   DashboardCampaignWithBrand,
+  DashboardPinnedBrand,
   DashboardTaskWithBrand,
   DashboardUpcomingWithBrand,
   GlobalDashboardData,
@@ -33,22 +36,22 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
     {
       label: "Active brands",
       value: String(data.stats.activeBrands),
-      helper: "Currently active brand workspaces in the portfolio.",
+      helper: "Current brand workspaces in the portfolio.",
     },
     {
       label: "Due this week",
       value: String(data.stats.tasksDueThisWeek),
-      helper: "Open tasks due in the next seven days across all brands.",
+      helper: "Open tasks scheduled in the next seven days.",
     },
     {
       label: "Overdue tasks",
       value: String(data.stats.overdueTasks),
-      helper: "Open tasks that need follow-up immediately.",
+      helper: "Items that need attention before anything else.",
     },
     {
       label: "Upcoming items",
       value: String(data.stats.upcomingItems),
-      helper: "Future meetings, launches, deadlines, and reminders.",
+      helper: "Future launches, meetings, deadlines, and reminders.",
     },
   ];
 
@@ -57,20 +60,35 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
       <DashboardHeader
         eyebrow="Dashboard"
         title="Global portfolio view"
-        subtitle={`As of ${todayLabel}, this dashboard gives you a single place to scan brand load, deadlines, upcoming moments, and the latest workspace activity.`}
+        subtitle={`As of ${todayLabel}, this dashboard gives you a single place to scan priorities, quick-access brands, deadlines, and recent workspace activity.`}
         meta={
           <>
             <Badge tone="info">{data.stats.activeBrands} active brands</Badge>
+            <Badge>{data.stats.pinnedBrands} pinned</Badge>
             <Badge>{data.stats.overdueTasks} overdue</Badge>
           </>
         }
         action={
-          <Link
-            href="/brands"
-            className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
-          >
-            Open brand directory
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/today"
+              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+            >
+              Open today view
+            </Link>
+            <Link
+              href="/brands"
+              className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            >
+              Open brand directory
+            </Link>
+            <a
+              href="/api/export"
+              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+            >
+              Download backup
+            </a>
+          </div>
         }
       />
 
@@ -84,6 +102,70 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             <p className="mt-2 text-sm leading-6 text-ink-muted">{card.helper}</p>
           </Card>
         ))}
+      </section>
+
+      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <Card id="daily-focus">
+          <SectionHeader
+            eyebrow="Focus"
+            title="Daily focus"
+            description="A tighter working view for today, the next three days, and the soonest upcoming moments."
+            action={
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="accent">{todayLabel}</Badge>
+                <Link
+                  href="/today"
+                  className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+                >
+                  Open planner
+                </Link>
+              </div>
+            }
+          />
+          <div className="mt-6 grid gap-4 xl:grid-cols-3">
+            <FocusColumn
+              title="Due today"
+              items={data.dueTodayTasks}
+              emptyTitle="Nothing due today"
+              emptyDescription="No open tasks are due today."
+            />
+            <FocusColumn
+              title="Next 3 days"
+              items={data.nextThreeDaysTasks}
+              emptyTitle="Nothing due soon"
+              emptyDescription="No open tasks are due in the next three days."
+            />
+            <UpcomingFocusColumn
+              title="Upcoming soon"
+              items={data.upcomingSoon}
+              emptyTitle="Nothing upcoming soon"
+              emptyDescription="No launches, meetings, or reminders are scheduled in the next three days."
+            />
+          </div>
+        </Card>
+
+        <Card id="pinned-brands">
+          <SectionHeader
+            eyebrow="Pinned"
+            title="Pinned brands"
+            description="Keep the brands you open most often close to the top of the day."
+            action={<Badge>{data.pinnedBrands.length}</Badge>}
+          />
+          <div className="mt-6">
+            {data.pinnedBrands.length > 0 ? (
+              <div className="data-list">
+                {data.pinnedBrands.map((brand) => (
+                  <PinnedBrandRow key={brand.id} brand={brand} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No pinned brands yet"
+                description="Pin your core daily brands from the directory or inside a workspace to keep them close at hand."
+              />
+            )}
+          </div>
+        </Card>
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -235,7 +317,7 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             ) : (
               <EmptyState
                 title="No recent notes"
-                description="Notes will appear here once teams start capturing brand context."
+                description="Notes will appear here once you start capturing brand context."
               />
             )}
           </div>
@@ -268,26 +350,24 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
 
         <Card>
           <SectionHeader
-            eyebrow="Memory"
-            title="Why this helps"
-            description="Activity history makes solo workflows easier to trust because the app can show what changed and in what order."
+            eyebrow="Backup"
+            title="Data confidence"
+            description="This stays a daily-use system when it is easy to trust, easy to recover, and easy to move."
           />
-          <div className="mt-6">
-            <div className="space-y-4">
-              <div className="app-subtle-card p-4">
-                <p className="text-sm font-semibold text-ink">Debug faster</p>
-                <p className="mt-2 text-sm leading-6 text-ink-muted">
-                  When something looks off, the feed shows whether a task, contact,
-                  asset, campaign, deadline, or brand record changed recently.
-                </p>
-              </div>
-              <div className="app-subtle-card p-4">
-                <p className="text-sm font-semibold text-ink">Keep context</p>
-                <p className="mt-2 text-sm leading-6 text-ink-muted">
-                  Even if you are the only user, the activity log gives the app a
-                  lightweight memory of recent operations.
-                </p>
-              </div>
+          <div className="mt-6 space-y-4">
+            <div className="app-subtle-card p-4">
+              <p className="text-sm font-semibold text-ink">Export whenever you want</p>
+              <p className="mt-2 text-sm leading-6 text-ink-muted">
+                Download a full JSON snapshot of brands, campaigns, tasks, contacts,
+                assets, upcoming items, notes, and activity from the backup button above.
+              </p>
+            </div>
+            <div className="app-subtle-card p-4">
+              <p className="text-sm font-semibold text-ink">Pin the brands that matter</p>
+              <p className="mt-2 text-sm leading-6 text-ink-muted">
+                Pinned brands and quick links keep the app biased toward your real
+                daily work instead of treating every workspace equally.
+              </p>
             </div>
           </div>
         </Card>
@@ -296,15 +376,143 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
   );
 }
 
+function FocusColumn({
+  title,
+  items,
+  emptyTitle,
+  emptyDescription,
+}: {
+  title: string;
+  items: DashboardTaskWithBrand[];
+  emptyTitle: string;
+  emptyDescription: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-app-line bg-app-soft/55 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-ink">{title}</p>
+        <Badge>{items.length}</Badge>
+      </div>
+      <div className="mt-4">
+        {items.length > 0 ? (
+          <div className="space-y-3">
+            {items.map((task) => (
+              <DashboardTaskItem key={task.id} task={task} compact />
+            ))}
+          </div>
+        ) : (
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UpcomingFocusColumn({
+  title,
+  items,
+  emptyTitle,
+  emptyDescription,
+}: {
+  title: string;
+  items: DashboardUpcomingWithBrand[];
+  emptyTitle: string;
+  emptyDescription: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-app-line bg-app-soft/55 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-ink">{title}</p>
+        <Badge>{items.length}</Badge>
+      </div>
+      <div className="mt-4">
+        {items.length > 0 ? (
+          <div className="space-y-3">
+            {items.map((item) => (
+              <DashboardUpcomingItem key={item.id} item={item} compact />
+            ))}
+          </div>
+        ) : (
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PinnedBrandRow({ brand }: { brand: DashboardPinnedBrand }) {
+  return (
+    <article className="data-row">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Link
+            href={`/brands/${brand.slug}`}
+            className="text-base font-semibold text-ink hover:text-accent"
+          >
+            {brand.name}
+          </Link>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <BrandColorBadge color={brand.brandColor} label={brand.status} size="xs" />
+            <Badge>{brand.openTasksCount} open tasks</Badge>
+            {brand.overdueTasksCount > 0 ? (
+              <Badge tone="danger">{brand.overdueTasksCount} overdue</Badge>
+            ) : null}
+          </div>
+          {brand.nextUpcoming ? (
+            <p className="mt-3 text-sm text-ink-muted">
+              Next up: {brand.nextUpcoming.title} on {formatWeekdayDate(brand.nextUpcoming.date)}
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-ink-muted">No upcoming item scheduled yet.</p>
+          )}
+          {brand.spotlightNote ? (
+            <div className="mt-3 rounded-2xl border border-app-line bg-app-soft/55 px-3 py-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="accent">Pinned note</Badge>
+                <Badge>{brand.spotlightNote.category}</Badge>
+              </div>
+              {brand.spotlightNote.title ? (
+                <p className="mt-3 text-sm font-semibold text-ink">
+                  {brand.spotlightNote.title}
+                </p>
+              ) : null}
+              <p className="mt-2 text-sm leading-6 text-ink-muted">
+                {brand.spotlightNote.text}
+              </p>
+            </div>
+          ) : null}
+        </div>
+        <Link
+          href={`/brands/${brand.slug}`}
+          className="inline-flex items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+        >
+          Open
+        </Link>
+      </div>
+      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <BrandReadinessSummary readiness={brand.readiness} compact />
+        <QuickLinksList
+          links={brand.quickLinks}
+          compact
+          emptyTitle="No quick links pinned yet"
+          emptyDescription="Flag the URLs you open most often from this brand."
+        />
+      </div>
+    </article>
+  );
+}
+
 function DashboardTaskItem({
   task,
   overdue = false,
+  compact = false,
 }: {
   task: DashboardTaskWithBrand;
   overdue?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <article className="data-row">
+    <article className={compact ? "rounded-2xl border border-app-line bg-white px-4 py-3" : "data-row"}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
@@ -318,7 +526,9 @@ function DashboardTaskItem({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge tone={taskStatusTones[task.status]}>{task.status}</Badge>
+          {!compact ? (
+            <Badge tone={taskStatusTones[task.status]}>{task.status}</Badge>
+          ) : null}
           <Badge tone={taskPriorityTones[task.priority]}>{task.priority}</Badge>
           <Badge tone={overdue ? "danger" : getDueDateTone(task.daysUntilDue)}>
             {getRelativeDateLabel(task.dueDate)}
@@ -329,9 +539,15 @@ function DashboardTaskItem({
   );
 }
 
-function DashboardUpcomingItem({ item }: { item: DashboardUpcomingWithBrand }) {
+function DashboardUpcomingItem({
+  item,
+  compact = false,
+}: {
+  item: DashboardUpcomingWithBrand;
+  compact?: boolean;
+}) {
   return (
-    <article className="data-row">
+    <article className={compact ? "rounded-2xl border border-app-line bg-white px-4 py-3" : "data-row"}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
@@ -349,8 +565,8 @@ function DashboardUpcomingItem({ item }: { item: DashboardUpcomingWithBrand }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge>{item.type}</Badge>
-          <Badge>{item.status}</Badge>
+          {!compact ? <Badge>{item.type}</Badge> : null}
+          <Badge>{getRelativeDateLabel(item.date)}</Badge>
         </div>
       </div>
     </article>
@@ -403,7 +619,10 @@ function DashboardNoteItem({ note }: { note: GlobalDashboardData["recentNotes"][
             {note.brandName} | {formatShortDate(note.createdAt)}
           </p>
         </div>
-        <Badge>{note.category}</Badge>
+        <div className="flex flex-wrap gap-2">
+          {note.pinned ? <Badge tone="accent">Pinned</Badge> : null}
+          <Badge>{note.category}</Badge>
+        </div>
       </div>
       <p className="mt-3 text-sm leading-6 text-ink-muted">{note.text}</p>
     </article>

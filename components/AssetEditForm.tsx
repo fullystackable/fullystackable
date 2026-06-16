@@ -215,6 +215,22 @@ export function AssetEditForm({
         />
       </label>
 
+      <label className="flex items-start gap-3 rounded-2xl border border-app-line bg-white/70 px-4 py-3">
+        <input
+          type="checkbox"
+          name="isQuickLink"
+          value="true"
+          defaultChecked={asset.isQuickLink}
+          className="mt-1 h-4 w-4 accent-[var(--app-accent)]"
+        />
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-ink">Pin as a quick link</span>
+          <span className="mt-1 block text-sm leading-6 text-ink-muted">
+            Best for URLs you open constantly from this brand workspace.
+          </span>
+        </span>
+      </label>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"

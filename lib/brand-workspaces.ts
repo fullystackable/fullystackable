@@ -1,5 +1,6 @@
 import "server-only";
 
+import { buildBrandReadiness } from "@/lib/brand-readiness";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   buildStatusSummary,
@@ -37,6 +38,7 @@ type BrandRow = {
   do_dont_list: string | null;
   reference_links: string | null;
   brand_color: string | null;
+  is_pinned: boolean;
 };
 
 type TaskRow = {
@@ -93,6 +95,7 @@ type AssetRow = {
   description: string | null;
   notes: string | null;
   updated_at: string;
+  is_quick_link: boolean;
 };
 
 type ContactRow = {
@@ -321,7 +324,7 @@ async function fetchBrands() {
   const { data, error } = await supabase
     .from("brands")
     .select(
-      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links, brand_color",
+      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links, brand_color, is_pinned",
     )
     .order("name");
 
@@ -357,17 +360,23 @@ export async function getBrandDirectoryPageData(
   }
 
   const supabase = createSupabaseServerClient();
-  const [tasksResult, assetsResult, campaignsResult] = await Promise.all([
+  const [tasksResult, assetsResult, campaignsResult, contactsResult] = await Promise.all([
     supabase
       .from("tasks")
       .select("id, brand_id, status, priority")
       .in("brand_id", brandIds),
-    supabase.from("assets").select("id, brand_id").in("brand_id", brandIds),
+    supabase
+      .from("assets")
+      .select(
+        "id, brand_id, related_campaign_id, title, asset_type, source_type, url, storage_path, is_quick_link",
+      )
+      .in("brand_id", brandIds),
     supabase
       .from("campaigns")
       .select("id, brand_id, title, status")
       .in("brand_id", brandIds)
       .order("title"),
+    supabase.from("contacts").select("brand_id").in("brand_id", brandIds),
   ]);
 
   if (tasksResult.error) {
@@ -382,11 +391,16 @@ export async function getBrandDirectoryPageData(
     throw new Error(`Failed to load campaign summaries: ${campaignsResult.error.message}`);
   }
 
+  if (contactsResult.error) {
+    throw new Error(`Failed to load contact summaries: ${contactsResult.error.message}`);
+  }
+
   const tasksByBrand = new Map<
     string,
     { tasksCount: number; urgentTasks: number }
   >();
   const assetsCountByBrand = new Map<string, number>();
+  const contactsCountByBrand = new Map<string, number>();
   const campaignsByBrand = new Map<
     string,
     Array<{
@@ -394,6 +408,16 @@ export async function getBrandDirectoryPageData(
       title: string;
       status: string;
       statusValue: CampaignRow["status"];
+    }>
+  >();
+  const quickLinksByBrand = new Map<
+    string,
+    Array<{
+      id: string;
+      title: string;
+      url: string;
+      type: string;
+      relatedCampaignTitle: string | null;
     }>
   >();
 
@@ -418,13 +442,43 @@ export async function getBrandDirectoryPageData(
     tasksByBrand.set(task.brand_id, current);
   }
 
+  const campaignTitleById = new Map(
+    ((campaignsResult.data ?? []) as Array<
+      Pick<CampaignRow, "id" | "title">
+    >).map((campaign) => [campaign.id, campaign.title]),
+  );
+
   for (const asset of (assetsResult.data ?? []) as Array<
-    Pick<AssetRow, "brand_id">
+    Pick<
+      AssetRow,
+      | "id"
+      | "brand_id"
+      | "related_campaign_id"
+      | "title"
+      | "asset_type"
+      | "source_type"
+      | "url"
+      | "is_quick_link"
+    >
   >) {
     assetsCountByBrand.set(
       asset.brand_id,
       (assetsCountByBrand.get(asset.brand_id) ?? 0) + 1,
     );
+
+    if (asset.is_quick_link && asset.source_type === "external_url" && asset.url) {
+      const current = quickLinksByBrand.get(asset.brand_id) ?? [];
+      current.push({
+        id: asset.id,
+        title: asset.title,
+        url: asset.url,
+        type: humanizeSnakeCase(asset.asset_type),
+        relatedCampaignTitle: asset.related_campaign_id
+          ? campaignTitleById.get(asset.related_campaign_id) ?? null
+          : null,
+      });
+      quickLinksByBrand.set(asset.brand_id, current);
+    }
   }
 
   for (const campaign of (campaignsResult.data ?? []) as Array<
@@ -442,14 +496,27 @@ export async function getBrandDirectoryPageData(
     campaignsByBrand.set(campaign.brand_id, current);
   }
 
+  for (const contact of (contactsResult.data ?? []) as Array<
+    Pick<ContactRow, "brand_id">
+  >) {
+    contactsCountByBrand.set(
+      contact.brand_id,
+      (contactsCountByBrand.get(contact.brand_id) ?? 0) + 1,
+    );
+  }
+
   const directoryItems: BrandDirectoryItem[] = brands.map((brand) => {
     const taskSummary = tasksByBrand.get(brand.id);
+    const quickLinks = (quickLinksByBrand.get(brand.id) ?? [])
+      .sort((left, right) => left.title.localeCompare(right.title))
+      .slice(0, 4);
 
     return {
       id: brand.id,
       slug: brand.slug,
       name: brand.name,
       brandColor: brand.brand_color ?? "#0F766E",
+      isPinned: brand.is_pinned,
       description: brand.description ?? "No description added yet.",
       descriptionValue: brand.description,
       website: brand.website,
@@ -460,6 +527,21 @@ export async function getBrandDirectoryPageData(
       assetsCount: assetsCountByBrand.get(brand.id) ?? 0,
       urgentTasks: taskSummary?.urgentTasks ?? 0,
       searchMatchReason: null,
+      quickLinks,
+      readiness: buildBrandReadiness({
+        description: brand.description,
+        website: brand.website,
+        contactsCount: contactsCountByBrand.get(brand.id) ?? 0,
+        referenceLinks: brand.reference_links,
+        quickLinksCount: quickLinks.length,
+        brandVoice: brand.brand_voice,
+        commonCtas: brand.common_ctas,
+        audienceNotes: brand.audience_notes,
+        servicesProducts: brand.services_products,
+        pricingNotes: brand.pricing_notes,
+        positioningNotes: brand.positioning_notes,
+        doDontList: brand.do_dont_list,
+      }),
       campaigns: campaignsByBrand.get(brand.id) ?? [],
     };
   });
@@ -503,7 +585,14 @@ export async function getBrandDirectoryPageData(
     .map((brand) => ({
       ...brand,
       searchMatchReason: searchMatchReasons.get(brand.id) ?? null,
-    }));
+    }))
+    .sort((left, right) => {
+      if (left.isPinned !== right.isPinned) {
+        return left.isPinned ? -1 : 1;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
 
   return {
     brands: filteredBrands,
@@ -524,7 +613,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
   const brandResult = await supabase
     .from("brands")
     .select(
-      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links, brand_color",
+      "id, slug, name, description, website, status, notes, brand_voice, common_ctas, audience_notes, services_products, pricing_notes, positioning_notes, do_dont_list, reference_links, brand_color, is_pinned",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -556,7 +645,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
       supabase
         .from("assets")
         .select(
-          "id, brand_id, related_campaign_id, title, asset_category, asset_type, source_type, status, priority, url, storage_path, description, notes, updated_at",
+          "id, brand_id, related_campaign_id, title, asset_category, asset_type, source_type, status, priority, url, storage_path, description, notes, updated_at, is_quick_link",
         )
         .eq("brand_id", brand.id)
         .order("updated_at", { ascending: false }),
@@ -616,11 +705,48 @@ export async function getBrandWorkspaceBySlug(slug: string) {
     ]),
   );
 
+  const mappedAssets = ((assetsResult.data ?? []) as AssetRow[]).map((asset) => ({
+    id: asset.id,
+    relatedCampaignId: asset.related_campaign_id,
+    relatedCampaignTitle: asset.related_campaign_id
+      ? campaignTitles.get(asset.related_campaign_id) ?? null
+      : null,
+    title: asset.title,
+    category: humanizeSnakeCase(asset.asset_category),
+    categoryValue: asset.asset_category,
+    type: humanizeSnakeCase(asset.asset_type),
+    typeValue: asset.asset_type as AssetRow["asset_type"],
+    sourceType: humanizeSnakeCase(asset.source_type),
+    sourceTypeValue: asset.source_type,
+    status: humanizeSnakeCase(asset.status),
+    statusValue: asset.status,
+    priority: humanizeSnakeCase(asset.priority),
+    priorityValue: asset.priority,
+    url: asset.url,
+    storagePath: asset.storage_path,
+    description: asset.description,
+    notes: asset.notes,
+    updatedAt: toISODateOnly(asset.updated_at) ?? asset.updated_at,
+    isQuickLink: asset.is_quick_link,
+  }));
+  const quickLinks = mappedAssets
+    .filter((asset) => asset.isQuickLink && asset.url)
+    .map((asset) => ({
+      id: asset.id,
+      title: asset.title,
+      url: asset.url!,
+      type: asset.type,
+      relatedCampaignTitle: asset.relatedCampaignTitle,
+    }))
+    .sort((left, right) => left.title.localeCompare(right.title));
+  const contactsCount = ((contactsResult.data ?? []) as ContactRow[]).length;
+
   return {
     id: brand.id,
     slug: brand.slug,
     name: brand.name,
     brandColor: brand.brand_color ?? "#0F766E",
+    isPinned: brand.is_pinned,
     description: brand.description ?? "No description added yet.",
     descriptionValue: brand.description,
     website: brand.website,
@@ -635,6 +761,21 @@ export async function getBrandWorkspaceBySlug(slug: string) {
     positioningNotes: brand.positioning_notes,
     doDontList: brand.do_dont_list,
     referenceLinks: brand.reference_links,
+    quickLinks,
+    readiness: buildBrandReadiness({
+      description: brand.description,
+      website: brand.website,
+      contactsCount,
+      referenceLinks: brand.reference_links,
+      quickLinksCount: quickLinks.length,
+      brandVoice: brand.brand_voice,
+      commonCtas: brand.common_ctas,
+      audienceNotes: brand.audience_notes,
+      servicesProducts: brand.services_products,
+      pricingNotes: brand.pricing_notes,
+      positioningNotes: brand.positioning_notes,
+      doDontList: brand.do_dont_list,
+    }),
     tasks: ((tasksResult.data ?? []) as TaskRow[]).map((task) => ({
       id: task.id,
       title: task.title,
@@ -649,29 +790,7 @@ export async function getBrandWorkspaceBySlug(slug: string) {
         ? campaignTitles.get(task.related_campaign_id) ?? null
         : null,
     })),
-    assets: ((assetsResult.data ?? []) as AssetRow[]).map((asset) => ({
-      id: asset.id,
-      relatedCampaignId: asset.related_campaign_id,
-      relatedCampaignTitle: asset.related_campaign_id
-        ? campaignTitles.get(asset.related_campaign_id) ?? null
-        : null,
-      title: asset.title,
-      category: humanizeSnakeCase(asset.asset_category),
-      categoryValue: asset.asset_category,
-      type: humanizeSnakeCase(asset.asset_type),
-      typeValue: asset.asset_type as AssetRow["asset_type"],
-      sourceType: humanizeSnakeCase(asset.source_type),
-      sourceTypeValue: asset.source_type,
-      status: humanizeSnakeCase(asset.status),
-      statusValue: asset.status,
-      priority: humanizeSnakeCase(asset.priority),
-      priorityValue: asset.priority,
-      url: asset.url,
-      storagePath: asset.storage_path,
-      description: asset.description,
-      notes: asset.notes,
-      updatedAt: toISODateOnly(asset.updated_at) ?? asset.updated_at,
-    })),
+    assets: mappedAssets,
     contacts: ((contactsResult.data ?? []) as ContactRow[]).map((contact) => ({
       id: contact.id,
       name: contact.name,

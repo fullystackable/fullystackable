@@ -20,6 +20,16 @@ export function NoteCreateForm({ brandId, brandSlug }: NoteCreateFormProps) {
   const [state, formAction] = useActionState(createNote, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
+  function handleTextareaKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      (event.key === "Enter" || event.key === "NumpadEnter")
+    ) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  }
+
   useEffect(() => {
     if (state.success) {
       formRef.current?.reset();
@@ -68,12 +78,13 @@ export function NoteCreateForm({ brandId, brandSlug }: NoteCreateFormProps) {
           rows={4}
           className="app-input min-h-28 resize-y"
           placeholder="Add the context the team should keep close while executing."
+          onKeyDown={handleTextareaKeyDown}
         />
       </label>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-ink-muted">
-          Notes also feed the dashboard so recent context stays visible.
+          Notes also feed the dashboard and today view. Press Ctrl/Cmd + Enter to save.
         </p>
         <SubmitButton idleLabel="Add note" pendingLabel="Adding..." />
       </div>

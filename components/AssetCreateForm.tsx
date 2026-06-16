@@ -169,6 +169,21 @@ export function AssetCreateForm({
         />
       </label>
 
+      <label className="flex items-start gap-3 rounded-2xl border border-app-line bg-white/70 px-4 py-3">
+        <input
+          type="checkbox"
+          name="isQuickLink"
+          value="true"
+          className="mt-1 h-4 w-4 accent-[var(--app-accent)]"
+        />
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-ink">Pin as a quick link</span>
+          <span className="mt-1 block text-sm leading-6 text-ink-muted">
+            Use this for high-frequency URLs like admin panels, drives, docs, and dashboards.
+          </span>
+        </span>
+      </label>
+
       <p className="text-sm text-ink-muted">
         Use a URL for external assets, a storage path for upload placeholders, or neither for a simple reference record.
       </p>

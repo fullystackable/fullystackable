@@ -13,7 +13,7 @@ export function GlobalSearchForm({ compact = false }: GlobalSearchFormProps) {
   const currentQuery = pathname === "/search" ? (searchParams.get("q") ?? "") : "";
   const hasQuery = currentQuery.trim().length > 0;
   const placeholder = compact
-    ? "Search brands, tasks, assets, contacts, or notes"
+    ? "Search brands, tasks, assets, contacts, notes, campaigns, upcoming, or links"
     : "Search brands, tasks, assets, contacts, notes, campaigns, upcoming, links";
 
   return (

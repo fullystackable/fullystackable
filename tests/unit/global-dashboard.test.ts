@@ -8,10 +8,15 @@ import type { GlobalDashboardData } from "@/lib/dashboard-data";
 const dashboardData: GlobalDashboardData = {
   stats: {
     activeBrands: 2,
+    pinnedBrands: 1,
     tasksDueThisWeek: 1,
     overdueTasks: 0,
     upcomingItems: 1,
   },
+  dueTodayTasks: [],
+  nextThreeDaysTasks: [],
+  upcomingSoon: [],
+  pinnedBrands: [],
   dueThisWeekTasks: [],
   overdueTasks: [],
   upcomingItems: [],
@@ -34,6 +39,8 @@ describe("GlobalDashboard", () => {
     );
 
     expect(sectionIds).toEqual([
+      "daily-focus",
+      "pinned-brands",
       "tasks",
       "upcoming",
       "assets",

@@ -1,3 +1,5 @@
+import type { BrandReadiness } from "@/lib/brand-readiness";
+
 export type BrandStatusLabel =
   | "On track"
   | "Needs attention"
@@ -115,6 +117,7 @@ export type BrandDirectoryItem = {
   slug: string;
   name: string;
   brandColor: string;
+  isPinned: boolean;
   description: string;
   descriptionValue: string | null;
   website: string | null;
@@ -125,12 +128,22 @@ export type BrandDirectoryItem = {
   assetsCount: number;
   urgentTasks: number;
   searchMatchReason: string | null;
+  quickLinks: WorkspaceQuickLink[];
+  readiness: BrandReadiness;
   campaigns: Array<{
     id: string;
     title: string;
     status: string;
     statusValue: CampaignStatusValue;
   }>;
+};
+
+export type WorkspaceQuickLink = {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  relatedCampaignTitle: string | null;
 };
 
 export type WorkspaceTask = {
@@ -166,6 +179,7 @@ export type WorkspaceAsset = {
   updatedAt: string;
   relatedCampaignId: string | null;
   relatedCampaignTitle: string | null;
+  isQuickLink: boolean;
 };
 
 export type WorkspaceContact = {
@@ -228,6 +242,7 @@ export type BrandWorkspaceData = {
   slug: string;
   name: string;
   brandColor: string;
+  isPinned: boolean;
   description: string;
   descriptionValue: string | null;
   website: string | null;
@@ -244,6 +259,8 @@ export type BrandWorkspaceData = {
   referenceLinks: string | null;
   tasks: WorkspaceTask[];
   assets: WorkspaceAsset[];
+  quickLinks: WorkspaceQuickLink[];
+  readiness: BrandReadiness;
   contacts: WorkspaceContact[];
   campaigns: WorkspaceCampaign[];
   upcoming: WorkspaceUpcomingItem[];

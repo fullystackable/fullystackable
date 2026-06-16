@@ -1,7 +1,10 @@
 import Link from "next/link";
 
 import { BrandColorBadge } from "@/components/BrandColorBadge";
+import { BrandPinToggleForm } from "@/components/BrandPinToggleForm";
 import { BrandQuickActions } from "@/components/BrandQuickActions";
+import { BrandReadinessSummary } from "@/components/BrandReadinessSummary";
+import { QuickLinksList } from "@/components/QuickLinksList";
 import { Badge, Card } from "@/components/ui";
 import { brandStatusTones } from "@/lib/design";
 import type { BrandDirectoryItem } from "@/lib/workspace-view";
@@ -28,6 +31,7 @@ export function BrandCard({ brand }: BrandCardProps) {
             </h2>
           </div>
           <div className="flex flex-wrap gap-2 sm:justify-end">
+            <BrandPinToggleForm brandId={brand.id} isPinned={brand.isPinned} compact />
             <BrandColorBadge color={brand.brandColor} label="Planner color" />
             <Badge tone={brandStatusTones[brand.status]}>{brand.status}</Badge>
           </div>
@@ -39,6 +43,8 @@ export function BrandCard({ brand }: BrandCardProps) {
             {brand.searchMatchReason}
           </p>
         ) : null}
+
+        <BrandReadinessSummary readiness={brand.readiness} compact />
 
         <dl className="grid grid-cols-2 gap-3 border-t border-app-line pt-4 sm:grid-cols-3">
           <div className="metric-tile border-t-0 pt-0">
@@ -87,6 +93,13 @@ export function BrandCard({ brand }: BrandCardProps) {
             Open workspace
           </Link>
         </div>
+
+        <QuickLinksList
+          links={brand.quickLinks}
+          compact
+          emptyTitle="No quick links pinned yet"
+          emptyDescription="Flag the URLs you open most often from this brand's assets."
+        />
 
         <BrandQuickActions
           brand={{

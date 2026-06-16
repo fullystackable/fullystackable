@@ -59,6 +59,10 @@ function getString(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getBoolean(formData: FormData, key: string) {
+  return formData.get(key) === "true" || formData.get(key) === "on";
+}
+
 function toTimestampAtMidday(date: string) {
   return `${date}T15:00:00Z`;
 }
@@ -98,6 +102,7 @@ function normalizeAssetLocationFields(
 function revalidateActivityViews() {
   revalidatePath("/");
   revalidatePath("/dashboard");
+  revalidatePath("/today");
   revalidatePath("/activity");
 }
 
@@ -253,6 +258,70 @@ export async function updateBrand(
     success: true,
     message: "Brand updated.",
   };
+}
+
+export async function toggleBrandPinned(formData: FormData) {
+  const brandId = getString(formData, "brandId");
+  const isPinned = getString(formData, "isPinned") === "true";
+
+  if (!brandId) {
+    throw new Error("Brand id is required.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const brandResult = await supabase
+    .from("brands")
+    .select("name")
+    .eq("id", brandId)
+    .maybeSingle();
+
+  const brandName =
+    !brandResult.error && brandResult.data
+      ? (brandResult.data.name as string)
+      : "Brand";
+
+  let nextPinnedRank: number | null = null;
+
+  if (!isPinned) {
+    const rankResult = await supabase
+      .from("brands")
+      .select("pinned_rank")
+      .eq("is_pinned", true)
+      .order("pinned_rank", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (rankResult.error) {
+      throw new Error(`Could not determine next pin order: ${rankResult.error.message}`);
+    }
+
+    nextPinnedRank = ((rankResult.data?.pinned_rank as number | null) ?? 0) + 1;
+  }
+
+  const { error } = await supabase
+    .from("brands")
+    .update({
+      is_pinned: !isPinned,
+      pinned_rank: isPinned ? null : nextPinnedRank,
+    })
+    .eq("id", brandId);
+
+  if (error) {
+    throw new Error(`Could not update brand pin state: ${error.message}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/brands");
+  revalidatePath("/search");
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    entityType: "brand",
+    entityLabel: "Brand",
+    action: isPinned ? "unpinned" : "pinned",
+    subject: brandName,
+  });
 }
 
 export async function deleteBrand(formData: FormData) {
@@ -522,7 +591,7 @@ export async function createNote(
   const title = getString(formData, "title");
   const body = getString(formData, "body");
   const category = getString(formData, "category") || "random";
-  const pinned = formData.get("pinned") === "on";
+  const pinned = getBoolean(formData, "pinned");
 
   if (!brandId || !brandSlug) {
     return {
@@ -610,6 +679,49 @@ export async function deleteNote(formData: FormData) {
   revalidateActivityViews();
 }
 
+export async function toggleNotePinned(formData: FormData) {
+  const noteId = getString(formData, "noteId");
+  const brandSlug = getString(formData, "brandSlug");
+  const isPinned = getString(formData, "isPinned") === "true";
+
+  if (!noteId || !brandSlug) {
+    throw new Error("Note context is missing.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const noteResult = await supabase
+    .from("notes")
+    .select("brand_id, title, body")
+    .eq("id", noteId)
+    .maybeSingle();
+  const noteData = !noteResult.error ? noteResult.data : null;
+
+  const { error } = await supabase
+    .from("notes")
+    .update({
+      pinned: !isPinned,
+    })
+    .eq("id", noteId);
+
+  if (error) {
+    throw new Error(`Could not update note pin state: ${error.message}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: noteData?.brand_id ?? null,
+    entityType: "note",
+    entityLabel: "Note",
+    action: !isPinned ? "pinned" : "unpinned",
+    subject:
+      (noteData?.title as string | undefined) ??
+      ((noteData?.body as string | undefined)?.slice(0, 48) ?? "Note"),
+  });
+}
+
 export async function updateNote(
   _previousState: ActionState,
   formData: FormData,
@@ -619,7 +731,7 @@ export async function updateNote(
   const title = getString(formData, "title");
   const body = getString(formData, "body");
   const category = getString(formData, "category") || "random";
-  const pinned = formData.get("pinned") === "on";
+  const pinned = getBoolean(formData, "pinned");
 
   if (!noteId || !brandSlug) {
     return {
@@ -869,6 +981,7 @@ export async function createAsset(
   const status = getString(formData, "status") || "active";
   const priority = getString(formData, "priority") || "medium";
   const notes = getString(formData, "notes");
+  const isQuickLink = getBoolean(formData, "isQuickLink");
 
   if (!brandId || !brandSlug) {
     return {
@@ -918,6 +1031,13 @@ export async function createAsset(
     };
   }
 
+  if (isQuickLink && (!url || sourceType !== "external_url")) {
+    return {
+      success: false,
+      message: "Quick links need to use an external URL.",
+    };
+  }
+
   const normalizedLocation = normalizeAssetLocationFields(
     sourceType,
     url,
@@ -932,6 +1052,7 @@ export async function createAsset(
     asset_category: assetCategory,
     asset_type: assetType,
     source_type: sourceType,
+    is_quick_link: isQuickLink,
     url: normalizedLocation.url,
     storage_path: normalizedLocation.storagePath,
     description: description || null,
@@ -983,6 +1104,7 @@ export async function updateAsset(
   const status = getString(formData, "status") || "active";
   const priority = getString(formData, "priority") || "medium";
   const notes = getString(formData, "notes");
+  const isQuickLink = getBoolean(formData, "isQuickLink");
 
   if (!assetId || !brandSlug) {
     return {
@@ -1032,6 +1154,13 @@ export async function updateAsset(
     };
   }
 
+  if (isQuickLink && (!url || sourceType !== "external_url")) {
+    return {
+      success: false,
+      message: "Quick links need to use an external URL.",
+    };
+  }
+
   const normalizedLocation = normalizeAssetLocationFields(
     sourceType,
     url,
@@ -1053,6 +1182,7 @@ export async function updateAsset(
       asset_category: assetCategory,
       asset_type: assetType,
       source_type: sourceType,
+      is_quick_link: isQuickLink,
       url: normalizedLocation.url,
       storage_path: normalizedLocation.storagePath,
       description: description || null,
