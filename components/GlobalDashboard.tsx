@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { BrandColorBadge } from "@/components/BrandColorBadge";
 import { BrandReadinessSummary } from "@/components/BrandReadinessSummary";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import { GlobalSearchForm } from "@/components/GlobalSearchForm";
 import { QuickLinksList } from "@/components/QuickLinksList";
 import { Badge, Card, EmptyState, SectionHeader } from "@/components/ui";
 import {
@@ -21,6 +23,10 @@ import type {
 } from "@/lib/dashboard-data";
 import { getDueDateTone, taskPriorityTones, taskStatusTones } from "@/lib/design";
 import {
+  exportProtectionEnvVarNames,
+  getExportProtectionStatus,
+} from "@/lib/export-auth";
+import {
   buildCampaignWorkspaceHref,
   buildWorkspaceTaskHref,
   buildWorkspaceViewHref,
@@ -31,36 +37,33 @@ type GlobalDashboardProps = {
 };
 
 export function GlobalDashboard({ data }: GlobalDashboardProps) {
+  const exportProtection = getExportProtectionStatus();
+  const isExportProtected = exportProtection.mode === "configured";
   const todayLabel = formatWeekdayDate(data.todayLabel);
   const statCards = [
     {
       label: "Active brands",
       value: String(data.stats.activeBrands),
-      helper: "Current brand workspaces in the portfolio.",
     },
     {
       label: "Due this week",
       value: String(data.stats.tasksDueThisWeek),
-      helper: "Open tasks scheduled in the next seven days.",
     },
     {
       label: "Overdue tasks",
       value: String(data.stats.overdueTasks),
-      helper: "Items that need attention before anything else.",
     },
     {
       label: "Upcoming items",
       value: String(data.stats.upcomingItems),
-      helper: "Future launches, meetings, deadlines, and reminders.",
     },
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <DashboardHeader
-        eyebrow="Dashboard"
         title="Global portfolio view"
-        subtitle={`As of ${todayLabel}, this dashboard gives you a single place to scan priorities, quick-access brands, deadlines, and recent workspace activity.`}
+        size="compact"
         meta={
           <>
             <Badge tone="info">{data.stats.activeBrands} active brands</Badge>
@@ -68,90 +71,99 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             <Badge>{data.stats.overdueTasks} overdue</Badge>
           </>
         }
-        action={
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/today"
-              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
-            >
-              Open today view
-            </Link>
-            <Link
-              href="/brands"
-              className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
-            >
-              Open brand directory
-            </Link>
-            <a
-              href="/api/export"
-              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
-            >
-              Download backup
-            </a>
-          </div>
-        }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="mb-5 flex flex-wrap items-center gap-3 border-b border-app-line pb-5">
+        <div className="min-w-[min(100%,18rem)] flex-1 max-w-xl">
+          <Suspense fallback={<div className="h-11 rounded-full border border-app-line bg-app-soft/80" />}>
+            <GlobalSearchForm compact />
+          </Suspense>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/today"
+            className="app-secondary-button"
+          >
+            Open today view
+          </Link>
+          <Link
+            href="/brands"
+            className="app-primary-button"
+          >
+            Open brand directory
+          </Link>
+          {isExportProtected ? (
+            <a
+              href="/api/export"
+              className="app-secondary-button"
+            >
+              Download protected backup
+            </a>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="app-secondary-button-muted opacity-70"
+            >
+              Backup unavailable
+            </span>
+          )}
+        </div>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {statCards.map((card) => (
           <Card key={card.label} className="h-full">
             <p className="text-sm font-medium text-ink-muted">{card.label}</p>
-            <p className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-[2.4rem]">
               {card.value}
             </p>
-            <p className="mt-2 text-sm leading-6 text-ink-muted">{card.helper}</p>
           </Card>
         ))}
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <Card id="daily-focus">
           <SectionHeader
-            eyebrow="Focus"
             title="Daily focus"
-            description="A tighter working view for today, the next three days, and the soonest upcoming moments."
+            compact
             action={
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="accent">{todayLabel}</Badge>
                 <Link
                   href="/today"
-                  className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+                  className="app-secondary-button text-xs"
                 >
                   Open planner
                 </Link>
               </div>
             }
           />
-          <div className="mt-6 grid gap-4 xl:grid-cols-3">
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
             <FocusColumn
               title="Due today"
               items={data.dueTodayTasks}
               emptyTitle="Nothing due today"
-              emptyDescription="No open tasks are due today."
             />
             <FocusColumn
               title="Next 3 days"
               items={data.nextThreeDaysTasks}
               emptyTitle="Nothing due soon"
-              emptyDescription="No open tasks are due in the next three days."
             />
             <UpcomingFocusColumn
               title="Upcoming soon"
               items={data.upcomingSoon}
               emptyTitle="Nothing upcoming soon"
-              emptyDescription="No launches, meetings, or reminders are scheduled in the next three days."
             />
           </div>
         </Card>
 
         <Card id="pinned-brands">
           <SectionHeader
-            eyebrow="Pinned"
             title="Pinned brands"
-            description="Keep the brands you open most often close to the top of the day."
+            compact
             action={<Badge>{data.pinnedBrands.length}</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.pinnedBrands.length > 0 ? (
               <div className="data-list">
                 {data.pinnedBrands.map((brand) => (
@@ -168,15 +180,14 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
         </Card>
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card id="tasks">
           <SectionHeader
-            eyebrow="Tasks"
             title="Overdue tasks"
-            description="The tasks that are already late and need attention first."
+            compact
             action={<Badge tone="danger">{data.overdueTasks.length}</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.overdueTasks.length > 0 ? (
               <div className="data-list">
                 {data.overdueTasks.map((task) => (
@@ -186,7 +197,6 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             ) : (
               <EmptyState
                 title="No overdue tasks"
-                description="Nothing is currently late across active brand workspaces."
               />
             )}
           </div>
@@ -194,12 +204,11 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
 
         <Card>
           <SectionHeader
-            eyebrow="Tasks"
             title="Due this week"
-            description="Open work scheduled within the next seven days."
+            compact
             action={<Badge>{data.dueThisWeekTasks.length}</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.dueThisWeekTasks.length > 0 ? (
               <div className="data-list">
                 {data.dueThisWeekTasks.map((task) => (
@@ -209,32 +218,30 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             ) : (
               <EmptyState
                 title="Nothing due this week"
-                description="No open tasks are scheduled in the next seven days."
               />
             )}
           </div>
         </Card>
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card id="upcoming">
           <SectionHeader
-            eyebrow="Upcoming"
             title="Upcoming items"
-            description="Future launches, meetings, deadlines, and reminders across all brands."
+            compact
             action={
               <div className="flex flex-wrap items-center gap-2">
                 <Badge>{data.upcomingItems.length}</Badge>
                 <Link
                   href="/calendar"
-                  className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+                  className="app-secondary-button text-xs"
                 >
                   Open planner
                 </Link>
               </div>
             }
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.upcomingItems.length > 0 ? (
               <div className="data-list">
                 {data.upcomingItems.map((item) => (
@@ -244,7 +251,6 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             ) : (
               <EmptyState
                 title="No upcoming items"
-                description="New brand moments will appear here as they are scheduled."
               />
             )}
           </div>
@@ -252,12 +258,11 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
 
         <Card id="assets">
           <SectionHeader
-            eyebrow="Assets"
             title="Recent assets"
-            description="The most recently touched asset records across the portfolio."
+            compact
             action={<Badge>{data.recentAssets.length}</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.recentAssets.length > 0 ? (
               <div className="data-list">
                 {data.recentAssets.map((asset) => (
@@ -267,32 +272,30 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             ) : (
               <EmptyState
                 title="No recent assets"
-                description="Asset records will appear here as brands add links, references, and files."
               />
             )}
           </div>
         </Card>
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card id="activity">
           <SectionHeader
-            eyebrow="Activity"
             title="Recent activity"
-            description="A running memory of what changed most recently across the workspace."
+            compact
             action={
               <div className="flex flex-wrap items-center gap-2">
                 <Badge>{data.recentActivity.length}</Badge>
                 <Link
                   href="/activity"
-                  className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+                  className="app-secondary-button text-xs"
                 >
                   Open full log
                 </Link>
               </div>
             }
           />
-          <div className="mt-6">
+          <div className="mt-4">
             <ActivityFeed
               items={data.recentActivity}
               emptyDescription="As you create and update records, this feed will start remembering the sequence."
@@ -302,12 +305,11 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
 
         <Card id="notes">
           <SectionHeader
-            eyebrow="Notes"
             title="Recent notes"
-            description="The latest written context added across brand workspaces."
+            compact
             action={<Badge>{data.recentNotes.length}</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.recentNotes.length > 0 ? (
               <div className="data-list">
                 {data.recentNotes.map((note) => (
@@ -317,22 +319,20 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             ) : (
               <EmptyState
                 title="No recent notes"
-                description="Notes will appear here once you start capturing brand context."
               />
             )}
           </div>
         </Card>
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card id="campaigns">
           <SectionHeader
-            eyebrow="Campaigns"
             title="Recent campaigns"
-            description="The most recently scheduled campaign records currently in the workspace."
+            compact
             action={<Badge>{data.recentCampaigns.length}</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.recentCampaigns.length > 0 ? (
               <div className="data-list">
                 {data.recentCampaigns.map((campaign) => (
@@ -342,7 +342,6 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
             ) : (
               <EmptyState
                 title="No recent campaigns"
-                description="Campaigns with dates will appear here once brands start planning launch windows."
               />
             )}
           </div>
@@ -350,16 +349,23 @@ export function GlobalDashboard({ data }: GlobalDashboardProps) {
 
         <Card>
           <SectionHeader
-            eyebrow="Backup"
             title="Data confidence"
-            description="This stays a daily-use system when it is easy to trust, easy to recover, and easy to move."
+            compact
+            action={
+              <Badge tone={isExportProtected ? "success" : "warning"}>
+                {isExportProtected ? "Protected by credentials" : "Needs setup"}
+              </Badge>
+            }
           />
-          <div className="mt-6 space-y-4">
+          <div className="mt-4 space-y-3">
             <div className="app-subtle-card p-4">
-              <p className="text-sm font-semibold text-ink">Export whenever you want</p>
+              <p className="text-sm font-semibold text-ink">
+                {isExportProtected ? "Export with a credential check" : "Backups are off until protected"}
+              </p>
               <p className="mt-2 text-sm leading-6 text-ink-muted">
-                Download a full JSON snapshot of brands, campaigns, tasks, contacts,
-                assets, upcoming items, notes, and activity from the backup button above.
+                {isExportProtected
+                  ? "The backup endpoint now requires HTTP Basic auth before it returns the full workspace JSON. Your browser may prompt the first time you download from this device."
+                  : `Set ${exportProtectionEnvVarNames.username} and ${exportProtectionEnvVarNames.password} on the server to re-enable protected backup downloads.`}
               </p>
             </div>
             <div className="app-subtle-card p-4">
@@ -385,15 +391,15 @@ function FocusColumn({
   title: string;
   items: DashboardTaskWithBrand[];
   emptyTitle: string;
-  emptyDescription: string;
+  emptyDescription?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-app-line bg-app-soft/55 p-4">
+    <div className="rounded-2xl border border-app-line bg-app-soft/90 p-3.5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-ink">{title}</p>
         <Badge>{items.length}</Badge>
       </div>
-      <div className="mt-4">
+      <div className="mt-3">
         {items.length > 0 ? (
           <div className="space-y-3">
             {items.map((task) => (
@@ -417,15 +423,15 @@ function UpcomingFocusColumn({
   title: string;
   items: DashboardUpcomingWithBrand[];
   emptyTitle: string;
-  emptyDescription: string;
+  emptyDescription?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-app-line bg-app-soft/55 p-4">
+    <div className="rounded-2xl border border-app-line bg-app-soft/90 p-3.5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-ink">{title}</p>
         <Badge>{items.length}</Badge>
       </div>
-      <div className="mt-4">
+      <div className="mt-3">
         {items.length > 0 ? (
           <div className="space-y-3">
             {items.map((item) => (
@@ -466,7 +472,7 @@ function PinnedBrandRow({ brand }: { brand: DashboardPinnedBrand }) {
             <p className="mt-3 text-sm text-ink-muted">No upcoming item scheduled yet.</p>
           )}
           {brand.spotlightNote ? (
-            <div className="mt-3 rounded-2xl border border-app-line bg-app-soft/55 px-3 py-3">
+            <div className="mt-3 rounded-2xl border border-app-line bg-app-soft/90 px-3 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="accent">Pinned note</Badge>
                 <Badge>{brand.spotlightNote.category}</Badge>
@@ -484,12 +490,12 @@ function PinnedBrandRow({ brand }: { brand: DashboardPinnedBrand }) {
         </div>
         <Link
           href={`/brands/${brand.slug}`}
-          className="inline-flex items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+          className="app-secondary-button"
         >
           Open
         </Link>
       </div>
-      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="mt-4 grid gap-3 2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <BrandReadinessSummary readiness={brand.readiness} compact />
         <QuickLinksList
           links={brand.quickLinks}
@@ -512,7 +518,7 @@ function DashboardTaskItem({
   compact?: boolean;
 }) {
   return (
-    <article className={compact ? "rounded-2xl border border-app-line bg-white px-4 py-3" : "data-row"}>
+    <article className={compact ? "rounded-2xl border border-app-line bg-app-surface px-4 py-3" : "data-row"}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
@@ -547,7 +553,7 @@ function DashboardUpcomingItem({
   compact?: boolean;
 }) {
   return (
-    <article className={compact ? "rounded-2xl border border-app-line bg-white px-4 py-3" : "data-row"}>
+    <article className={compact ? "rounded-2xl border border-app-line bg-app-surface px-4 py-3" : "data-row"}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link

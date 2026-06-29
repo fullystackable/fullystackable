@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 
 import { createActivityLogEntry } from "@/lib/activity-log";
 import { normalizeBrandColor } from "@/lib/brand-colors";
+import {
+  getBrandWorkspaceSupportTablesPendingMessage,
+  isMissingBrandWorkspaceSupportTableError,
+} from "@/lib/supabase-schema";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { humanizeSnakeCase } from "@/lib/workspace-view";
 
@@ -74,6 +78,26 @@ function parseGoals(value: string) {
     .filter(Boolean);
 }
 
+function slugifyFileStem(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
+function normalizeMarkdownFileName(fileName: string, label: string) {
+  const trimmedFileName = fileName.trim();
+
+  if (trimmedFileName) {
+    return /\.md$/i.test(trimmedFileName) ? trimmedFileName : `${trimmedFileName}.md`;
+  }
+
+  const fallbackStem = slugifyFileStem(label) || "database-info";
+  return `${fallbackStem}.md`;
+}
+
 function normalizeAssetLocationFields(
   sourceType: string,
   url: string,
@@ -122,6 +146,17 @@ function getUpcomingActivityLabel(type: string) {
   }
 
   return humanizeSnakeCase(type);
+}
+
+function getBrandWorkspaceSupportActionErrorMessage(
+  error: { code?: string | null; message: string } | null,
+  fallbackMessage: string,
+) {
+  if (error && isMissingBrandWorkspaceSupportTableError(error)) {
+    return getBrandWorkspaceSupportTablesPendingMessage();
+  }
+
+  return fallbackMessage;
 }
 
 export async function createBrand(
@@ -787,6 +822,374 @@ export async function updateNote(
     success: true,
     message: "Note updated.",
   };
+}
+
+export async function createPrompt(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const brandId = getString(formData, "brandId");
+  const brandSlug = getString(formData, "brandSlug");
+  const label = getString(formData, "label");
+  const prompt = getString(formData, "prompt");
+
+  if (!brandId || !brandSlug) {
+    return {
+      success: false,
+      message: "Brand context is missing.",
+    };
+  }
+
+  if (!label) {
+    return {
+      success: false,
+      message: "Prompt label is required.",
+    };
+  }
+
+  if (!prompt) {
+    return {
+      success: false,
+      message: "Prompt body is required.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("brand_prompts").insert({
+    brand_id: brandId,
+    label,
+    prompt,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      message: getBrandWorkspaceSupportActionErrorMessage(
+        error,
+        `Could not create prompt: ${error.message}`,
+      ),
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+  revalidatePath("/search");
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    entityType: "prompt",
+    entityLabel: "Prompt",
+    action: "created",
+    subject: label,
+  });
+
+  return {
+    success: true,
+    message: "Prompt added.",
+  };
+}
+
+export async function updatePrompt(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const promptId = getString(formData, "promptId");
+  const brandSlug = getString(formData, "brandSlug");
+  const label = getString(formData, "label");
+  const prompt = getString(formData, "prompt");
+
+  if (!promptId || !brandSlug) {
+    return {
+      success: false,
+      message: "Prompt context is missing.",
+    };
+  }
+
+  if (!label) {
+    return {
+      success: false,
+      message: "Prompt label is required.",
+    };
+  }
+
+  if (!prompt) {
+    return {
+      success: false,
+      message: "Prompt body is required.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const existingPromptResult = await supabase
+    .from("brand_prompts")
+    .select("brand_id")
+    .eq("id", promptId)
+    .maybeSingle();
+  const existingPromptData = !existingPromptResult.error ? existingPromptResult.data : null;
+  const { error } = await supabase
+    .from("brand_prompts")
+    .update({
+      label,
+      prompt,
+    })
+    .eq("id", promptId);
+
+  if (error) {
+    return {
+      success: false,
+      message: getBrandWorkspaceSupportActionErrorMessage(
+        error,
+        `Could not update prompt: ${error.message}`,
+      ),
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+  revalidatePath("/search");
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingPromptData?.brand_id ?? null,
+    entityType: "prompt",
+    entityLabel: "Prompt",
+    action: "updated",
+    subject: label,
+  });
+
+  return {
+    success: true,
+    message: "Prompt updated.",
+  };
+}
+
+export async function deletePrompt(formData: FormData) {
+  const promptId = getString(formData, "promptId");
+  const brandSlug = getString(formData, "brandSlug");
+
+  if (!promptId || !brandSlug) {
+    throw new Error("Prompt id and brand slug are required.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const promptResult = await supabase
+    .from("brand_prompts")
+    .select("brand_id, label")
+    .eq("id", promptId)
+    .maybeSingle();
+  const promptData = !promptResult.error ? promptResult.data : null;
+
+  await writeActivitySafe({
+    brandId: promptData?.brand_id ?? null,
+    entityType: "prompt",
+    entityLabel: "Prompt",
+    action: "deleted",
+    subject: (promptData?.label as string | undefined) ?? "Prompt",
+  });
+
+  const { error } = await supabase.from("brand_prompts").delete().eq("id", promptId);
+
+  if (error) {
+    throw new Error(
+      getBrandWorkspaceSupportActionErrorMessage(
+        error,
+        `Could not delete prompt: ${error.message}`,
+      ),
+    );
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+  revalidatePath("/search");
+  revalidateActivityViews();
+}
+
+export async function createDatabaseFile(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const brandId = getString(formData, "brandId");
+  const brandSlug = getString(formData, "brandSlug");
+  const label = getString(formData, "label");
+  const fileName = normalizeMarkdownFileName(getString(formData, "fileName"), label);
+  const markdownContent = getString(formData, "markdownContent");
+
+  if (!brandId || !brandSlug) {
+    return {
+      success: false,
+      message: "Brand context is missing.",
+    };
+  }
+
+  if (!label) {
+    return {
+      success: false,
+      message: "Database info label is required.",
+    };
+  }
+
+  if (!markdownContent) {
+    return {
+      success: false,
+      message: "Markdown content is required.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("brand_database_files").insert({
+    brand_id: brandId,
+    label,
+    file_name: fileName,
+    markdown_content: markdownContent,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      message: getBrandWorkspaceSupportActionErrorMessage(
+        error,
+        `Could not create database info entry: ${error.message}`,
+      ),
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+  revalidatePath("/search");
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId,
+    entityType: "database_file",
+    entityLabel: "Database Info",
+    action: "created",
+    subject: label,
+    details: fileName,
+  });
+
+  return {
+    success: true,
+    message: "Database info entry added.",
+  };
+}
+
+export async function updateDatabaseFile(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const databaseFileId = getString(formData, "databaseFileId");
+  const brandSlug = getString(formData, "brandSlug");
+  const label = getString(formData, "label");
+  const fileName = normalizeMarkdownFileName(getString(formData, "fileName"), label);
+  const markdownContent = getString(formData, "markdownContent");
+
+  if (!databaseFileId || !brandSlug) {
+    return {
+      success: false,
+      message: "Database info context is missing.",
+    };
+  }
+
+  if (!label) {
+    return {
+      success: false,
+      message: "Database info label is required.",
+    };
+  }
+
+  if (!markdownContent) {
+    return {
+      success: false,
+      message: "Markdown content is required.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const existingFileResult = await supabase
+    .from("brand_database_files")
+    .select("brand_id")
+    .eq("id", databaseFileId)
+    .maybeSingle();
+  const existingFileData = !existingFileResult.error ? existingFileResult.data : null;
+  const { error } = await supabase
+    .from("brand_database_files")
+    .update({
+      label,
+      file_name: fileName,
+      markdown_content: markdownContent,
+    })
+    .eq("id", databaseFileId);
+
+  if (error) {
+    return {
+      success: false,
+      message: getBrandWorkspaceSupportActionErrorMessage(
+        error,
+        `Could not update database info entry: ${error.message}`,
+      ),
+    };
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+  revalidatePath("/search");
+  revalidateActivityViews();
+  await writeActivitySafe({
+    brandId: existingFileData?.brand_id ?? null,
+    entityType: "database_file",
+    entityLabel: "Database Info",
+    action: "updated",
+    subject: label,
+    details: fileName,
+  });
+
+  return {
+    success: true,
+    message: "Database info entry updated.",
+  };
+}
+
+export async function deleteDatabaseFile(formData: FormData) {
+  const databaseFileId = getString(formData, "databaseFileId");
+  const brandSlug = getString(formData, "brandSlug");
+
+  if (!databaseFileId || !brandSlug) {
+    throw new Error("Database info id and brand slug are required.");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const fileResult = await supabase
+    .from("brand_database_files")
+    .select("brand_id, label, file_name")
+    .eq("id", databaseFileId)
+    .maybeSingle();
+  const fileData = !fileResult.error ? fileResult.data : null;
+
+  await writeActivitySafe({
+    brandId: fileData?.brand_id ?? null,
+    entityType: "database_file",
+    entityLabel: "Database Info",
+    action: "deleted",
+    subject: (fileData?.label as string | undefined) ?? "Database Info",
+    details: (fileData?.file_name as string | undefined) ?? null,
+  });
+
+  const { error } = await supabase
+    .from("brand_database_files")
+    .delete()
+    .eq("id", databaseFileId);
+
+  if (error) {
+    throw new Error(
+      getBrandWorkspaceSupportActionErrorMessage(
+        error,
+        `Could not delete database info entry: ${error.message}`,
+      ),
+    );
+  }
+
+  revalidatePath("/brands");
+  revalidatePath(`/brands/${brandSlug}`);
+  revalidatePath("/search");
+  revalidateActivityViews();
 }
 
 export async function createContact(

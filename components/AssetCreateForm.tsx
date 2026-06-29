@@ -169,7 +169,7 @@ export function AssetCreateForm({
         />
       </label>
 
-      <label className="flex items-start gap-3 rounded-2xl border border-app-line bg-white/70 px-4 py-3">
+      <label className="flex items-start gap-3 rounded-2xl border border-app-line bg-app-soft/90 px-4 py-3">
         <input
           type="checkbox"
           name="isQuickLink"

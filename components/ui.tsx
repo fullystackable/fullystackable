@@ -25,18 +25,18 @@ type BadgeProps = {
 
 type EmptyStateProps = {
   title: string;
-  description: string;
+  description?: string;
   className?: string;
 };
 
 const badgeStyles: Record<BadgeTone, string> = {
-  neutral: "border-app-line bg-app-soft text-ink-muted",
+  neutral: "border-app-line bg-app-soft/80 text-ink-muted",
   sidebar: "border-white/10 bg-white/10 text-white",
   accent: "border-accent/15 bg-accent-soft text-accent",
   success: "border-success/15 bg-success-soft text-success",
   warning: "border-warning/20 bg-warning-soft text-warning",
   danger: "border-danger/18 bg-danger-soft text-danger",
-  info: "border-frost/45 bg-frost/30 text-ink",
+  info: "border-frost/20 bg-frost/10 text-frost",
 };
 
 export function cx(...classes: Array<string | false | null | undefined>) {
@@ -45,7 +45,7 @@ export function cx(...classes: Array<string | false | null | undefined>) {
 
 export function Card({ children, className, id }: CardProps) {
   return (
-    <section id={id} className={cx("app-card p-4 sm:p-5", className)}>
+    <section id={id} className={cx("app-card p-4 sm:p-4 lg:p-5", className)}>
       {children}
     </section>
   );
@@ -63,8 +63,8 @@ export function SectionHeader({
     <div
       className={cx(
         compact
-          ? "flex flex-col gap-3 border-b border-app-line pb-4 sm:flex-row sm:items-end sm:justify-between"
-          : "flex flex-col gap-4 border-b border-app-line pb-4 sm:flex-row sm:items-end sm:justify-between",
+          ? "flex flex-col gap-3 border-b border-app-line pb-3.5 sm:flex-row sm:items-end sm:justify-between"
+          : "flex flex-col gap-3.5 border-b border-app-line pb-4 sm:flex-row sm:items-end sm:justify-between",
         className,
       )}
     >
@@ -77,7 +77,7 @@ export function SectionHeader({
         <h2
           className={cx(
             "font-semibold tracking-tight text-ink",
-            compact ? "mt-1 text-lg sm:text-xl" : "mt-2 text-xl sm:text-2xl",
+            compact ? "mt-1 text-lg sm:text-[1.35rem]" : "mt-2 text-xl sm:text-[1.6rem]",
           )}
         >
           {title}
@@ -97,7 +97,7 @@ export function Badge({ children, tone = "neutral", className }: BadgeProps) {
   return (
     <span
       className={cx(
-        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.02em]",
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold tracking-[0.02em]",
         badgeStyles[tone],
         className,
       )}
@@ -115,12 +115,14 @@ export function EmptyState({
   return (
     <div
       className={cx(
-        "rounded-2xl border border-dashed border-app-line bg-app-soft px-4 py-5",
+        "rounded-2xl border border-dashed border-app-line bg-app-soft/80 px-4 py-4",
         className,
       )}
     >
       <p className="text-sm font-semibold text-ink">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-ink-muted">{description}</p>
+      {description ? (
+        <p className="mt-2 text-sm leading-6 text-ink-muted">{description}</p>
+      ) : null}
     </div>
   );
 }

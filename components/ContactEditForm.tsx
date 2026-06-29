@@ -56,7 +56,7 @@ export function ContactEditForm({ contact, brandSlug }: ContactEditFormProps) {
   return (
     <form
       action={handleSubmit}
-      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-app-surface p-4"
     >
       <input type="hidden" name="contactId" value={contact.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />

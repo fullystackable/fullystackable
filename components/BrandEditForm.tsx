@@ -72,7 +72,7 @@ export function BrandEditForm({
     <form
       action={handleSubmit}
       className={`space-y-4 ${
-        framed ? "rounded-2xl border border-app-line bg-white/90 p-4" : ""
+        framed ? "rounded-2xl border border-app-line bg-app-surface p-4" : ""
       }`}
     >
       <input type="hidden" name="brandId" value={brand.id} />

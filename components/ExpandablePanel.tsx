@@ -63,12 +63,12 @@ export function ExpandablePanel({
             <p className="text-sm font-semibold text-ink">{title}</p>
             <p className="mt-1 text-sm leading-6 text-ink-muted">{description}</p>
           </div>
-          <span className="inline-flex w-full items-center justify-center rounded-full border border-app-line bg-white px-3 py-1.5 text-sm font-medium text-ink sm:w-auto">
+          <span className="app-secondary-button w-full sm:w-auto">
             {buttonLabel}
           </span>
         </div>
 
-        <div className="mt-4">{children}</div>
+        <div className="mt-3.5">{children}</div>
       </div>
     );
   }
@@ -90,13 +90,13 @@ export function ExpandablePanel({
             <p className="text-sm font-semibold text-ink">{title}</p>
             <p className="mt-1 text-sm leading-6 text-ink-muted">{description}</p>
           </div>
-          <span className="inline-flex w-full items-center justify-center rounded-full border border-app-line bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-app-soft sm:w-auto">
+          <span className="app-secondary-button w-full sm:w-auto">
             {isOpen ? "Hide form" : buttonLabel}
           </span>
         </div>
       </summary>
 
-      <div className="mt-4">{children}</div>
+      <div className="mt-3.5">{children}</div>
     </details>
   );
 }

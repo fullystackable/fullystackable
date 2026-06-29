@@ -9,6 +9,8 @@ export type WorkspaceTab =
   | "assets"
   | "contacts"
   | "notes"
+  | "prompts"
+  | "database"
   | "profile";
 export type CampaignWorkspaceTab = "overview" | "tasks" | "assets" | "deadlines";
 

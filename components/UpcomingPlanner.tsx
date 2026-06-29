@@ -57,7 +57,7 @@ export function UpcomingPlanner({
       : null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <Card>
         <SectionHeader
           eyebrow="Planning"
@@ -72,7 +72,7 @@ export function UpcomingPlanner({
           compact
         />
 
-        <form action="/calendar" className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_260px_auto]">
+        <form action="/calendar" className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_240px_auto]">
           <label className="space-y-2">
             <span className="text-sm font-medium text-ink">View</span>
             <select name="view" defaultValue={view} className="app-input">
@@ -98,14 +98,14 @@ export function UpcomingPlanner({
           <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-1">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+              className="app-primary-button"
             >
               Apply view
             </button>
             {(view !== "week" || layout !== "calendar") ? (
               <Link
                 href="/calendar"
-                className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+                className="app-secondary-button"
               >
                 Reset
               </Link>
@@ -113,17 +113,15 @@ export function UpcomingPlanner({
           </div>
         </form>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {plannerViews.map((option) => (
             <Link
               key={option.id}
               href={`/calendar?view=${option.id}&layout=${layout}`}
               className={cx(
-                "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium",
-                view === option.id
-                  ? "bg-app-sidebar text-white"
-                  : "border border-app-line text-ink-muted hover:bg-app-soft hover:text-ink",
+                "app-tab-link",
               )}
+              data-active={view === option.id}
             >
               {option.label}
             </Link>
@@ -149,12 +147,12 @@ export function UpcomingPlanner({
             }
             compact
           />
-          <div className="mt-5">
+          <div className="mt-4">
             <CalendarGrid days={calendarDays} monthView={view === "month"} />
           </div>
         </Card>
       ) : (
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
           {groups.map((group) => (
             <Card key={group.id}>
               <SectionHeader
@@ -174,7 +172,7 @@ export function UpcomingPlanner({
                 }
                 compact
               />
-              <div className="mt-5 data-list">
+              <div className="mt-4 data-list">
                 {group.items.map((item) => (
                   <PlannerItemRow key={item.id} item={item} />
                 ))}
@@ -201,7 +199,7 @@ function CalendarGrid({
           key={day.date}
           className={cx(
             "rounded-2xl border p-3",
-            day.isCurrentMonth ? "border-app-line bg-app-soft/55" : "border-app-line/60 bg-white/55",
+            day.isCurrentMonth ? "border-app-line bg-app-soft/90" : "border-app-line/60 bg-app-surface/70",
             day.isToday ? "ring-2 ring-accent/30" : "",
           )}
         >
@@ -221,7 +219,7 @@ function CalendarGrid({
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="block rounded-xl border bg-white px-3 py-2 hover:border-app-line-strong hover:bg-app-surface"
+                  className="block rounded-xl border bg-app-surface px-3 py-2 hover:border-app-line-strong hover:bg-app-surface-muted"
                   style={{
                     borderColor: toBrandColorRgba(item.brandColor, 0.26),
                     boxShadow: `inset 3px 0 0 ${normalizeBrandColor(item.brandColor)}`,

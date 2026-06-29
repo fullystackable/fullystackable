@@ -53,7 +53,7 @@ export function BrandQuickActions({ brand }: BrandQuickActionsProps) {
               "inline-flex min-h-11 items-center justify-center rounded-full px-3 py-2 text-sm font-medium",
               activeTab === tab.id
                 ? "bg-app-sidebar text-white"
-                : "border border-app-line bg-white text-ink-muted hover:bg-app-soft hover:text-ink",
+                : "border border-app-line bg-app-surface text-ink-muted hover:bg-app-soft hover:text-ink",
             )}
           >
             {tab.label}
@@ -226,7 +226,7 @@ function QuickObjectiveForm({ brand }: BrandQuickActionsProps) {
 
   if (activeCampaigns.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-app-line bg-white/75 px-4 py-4">
+      <div className="rounded-2xl border border-dashed border-app-line bg-app-soft/90 px-4 py-4">
         <p className="text-sm font-semibold text-ink">No active objectives to complete</p>
         <p className="mt-2 text-sm leading-6 text-ink-muted">
           Once this brand has planned or active campaigns, you can mark them complete from here.

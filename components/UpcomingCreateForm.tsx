@@ -79,7 +79,7 @@ export function UpcomingCreateForm({
             <option value="postponed">Postponed</option>
           </select>
         </label>
-        <div className="rounded-2xl border border-app-line bg-white/80 px-4 py-3 text-sm text-ink">
+        <div className="rounded-2xl border border-app-line bg-app-soft/90 px-4 py-3 text-sm text-ink">
           Timeline items show up on the dashboard automatically after save.
         </div>
       </div>

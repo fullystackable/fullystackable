@@ -14,6 +14,8 @@ const workspaceTabs: Array<{ label: string; tab: SidebarWorkspaceTab }> = [
   { label: "Assets", tab: "assets" },
   { label: "Contacts", tab: "contacts" },
   { label: "Notes", tab: "notes" },
+  { label: "Prompts", tab: "prompts" },
+  { label: "Database Info", tab: "database" },
 ];
 
 const globalWorkspaceDestinations: Record<SidebarWorkspaceTab, string> = {
@@ -22,6 +24,8 @@ const globalWorkspaceDestinations: Record<SidebarWorkspaceTab, string> = {
   assets: "/dashboard#assets",
   contacts: "/search",
   notes: "/dashboard#notes",
+  prompts: "/brands",
+  database: "/brands",
 };
 
 export function isBrandWorkspacePath(pathname: string) {

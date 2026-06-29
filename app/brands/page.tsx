@@ -30,7 +30,7 @@ export default async function BrandsPage({ searchParams }: BrandsPageProps) {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <DashboardHeader
         eyebrow="Portfolio"
         title="All brands"

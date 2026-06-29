@@ -122,6 +122,7 @@ export function WorkspaceSortControls({
             {hasCustomSettings ? (
               <Link
                 href={buildWorkspaceResetHref(brandSlug, activeCampaignId)}
+                scroll={false}
                 className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
               >
                 Reset

@@ -146,6 +146,21 @@ export type WorkspaceQuickLink = {
   relatedCampaignTitle: string | null;
 };
 
+export type WorkspacePrompt = {
+  id: string;
+  label: string;
+  prompt: string;
+  updatedAt: string;
+};
+
+export type WorkspaceDatabaseFile = {
+  id: string;
+  label: string;
+  fileName: string;
+  content: string;
+  updatedAt: string;
+};
+
 export type WorkspaceTask = {
   id: string;
   title: string;
@@ -265,6 +280,8 @@ export type BrandWorkspaceData = {
   campaigns: WorkspaceCampaign[];
   upcoming: WorkspaceUpcomingItem[];
   notes: WorkspaceNote[];
+  prompts: WorkspacePrompt[];
+  databaseFiles: WorkspaceDatabaseFile[];
 };
 
 export type CampaignWorkspaceData = {

@@ -15,7 +15,9 @@ export type ActivityEntityType =
   | "contact"
   | "note"
   | "campaign"
-  | "upcoming_item";
+  | "upcoming_item"
+  | "prompt"
+  | "database_file";
 
 type ActivityLogRow = {
   id: string;
@@ -235,6 +237,16 @@ function buildActivityHref(
       return buildWorkspaceViewHref(brand.slug, {
         tab: "notes",
         hash: "#notes",
+      });
+    case "prompt":
+      return buildWorkspaceViewHref(brand.slug, {
+        tab: "prompts",
+        hash: "#prompts",
+      });
+    case "database_file":
+      return buildWorkspaceViewHref(brand.slug, {
+        tab: "database",
+        hash: "#database",
       });
     case "brand":
     default:

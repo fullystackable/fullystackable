@@ -28,7 +28,7 @@ function PinButton({
         "inline-flex min-h-11 items-center justify-center rounded-full border px-3 py-2 text-sm font-medium transition",
         isPinned
           ? "border-warning/25 bg-warning-soft text-warning hover:opacity-90"
-          : "border-app-line bg-white text-ink-muted hover:bg-app-soft hover:text-ink",
+          : "border-app-line bg-app-surface text-ink-muted hover:bg-app-soft hover:text-ink",
         compact ? "px-3 py-1.5 text-xs" : "",
       )}
       disabled={pending}

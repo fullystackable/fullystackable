@@ -1,5 +1,8 @@
 import "server-only";
 
+import {
+  isMissingBrandWorkspaceSupportTableError,
+} from "@/lib/supabase-schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   buildCampaignWorkspaceHref,
@@ -106,6 +109,23 @@ type UpcomingItemRow = {
   notes: string | null;
 };
 
+type PromptRow = {
+  id: string;
+  brand_id: string;
+  label: string;
+  prompt: string;
+  updated_at: string;
+};
+
+type DatabaseFileRow = {
+  id: string;
+  brand_id: string;
+  label: string;
+  file_name: string;
+  markdown_content: string;
+  updated_at: string;
+};
+
 type BrandLookup = {
   id: string;
   slug: string;
@@ -121,6 +141,8 @@ export type SearchResultType =
   | "assets"
   | "contacts"
   | "notes"
+  | "prompts"
+  | "database"
   | "campaigns"
   | "upcoming"
   | "links";
@@ -155,6 +177,8 @@ const sectionOrder: Array<{ type: SearchResultType; title: string }> = [
   { type: "assets", title: "Assets" },
   { type: "contacts", title: "Contacts" },
   { type: "notes", title: "Notes" },
+  { type: "prompts", title: "Prompts" },
+  { type: "database", title: "Database info" },
   { type: "campaigns", title: "Campaigns" },
   { type: "upcoming", title: "Upcoming items" },
   { type: "links", title: "Links" },
@@ -227,6 +251,24 @@ function sortResults(results: UniversalSearchResult[]) {
   });
 }
 
+function getOptionalBrandWorkspaceRows<Row extends object>(
+  result: {
+    data: Row[] | null;
+    error: { code?: string | null; message: string } | null;
+  },
+  errorMessage: string,
+) {
+  if (result.error) {
+    if (isMissingBrandWorkspaceSupportTableError(result.error)) {
+      return [] as Row[];
+    }
+
+    throw new Error(`${errorMessage}: ${result.error.message}`);
+  }
+
+  return (result.data ?? []) as Row[];
+}
+
 export async function getUniversalSearchData(
   rawQuery: string | null | undefined,
 ): Promise<UniversalSearchData> {
@@ -248,6 +290,8 @@ export async function getUniversalSearchData(
     assetsResult,
     contactsResult,
     notesResult,
+    promptsResult,
+    databaseFilesResult,
     campaignsResult,
     upcomingResult,
   ] = await Promise.all([
@@ -271,6 +315,12 @@ export async function getUniversalSearchData(
     supabase
       .from("notes")
       .select("id, brand_id, title, body, category, created_at"),
+    supabase
+      .from("brand_prompts")
+      .select("id, brand_id, label, prompt, updated_at"),
+    supabase
+      .from("brand_database_files")
+      .select("id, brand_id, label, file_name, markdown_content, updated_at"),
     supabase
       .from("campaigns")
       .select(
@@ -300,6 +350,21 @@ export async function getUniversalSearchData(
   if (notesResult.error) {
     throw new Error(`Failed to search notes: ${notesResult.error.message}`);
   }
+
+  const promptRows = getOptionalBrandWorkspaceRows<PromptRow>(
+    {
+      data: (promptsResult.data ?? []) as PromptRow[],
+      error: promptsResult.error,
+    },
+    "Failed to search prompts",
+  );
+  const databaseFileRows = getOptionalBrandWorkspaceRows<DatabaseFileRow>(
+    {
+      data: (databaseFilesResult.data ?? []) as DatabaseFileRow[],
+      error: databaseFilesResult.error,
+    },
+    "Failed to search database info",
+  );
 
   if (campaignsResult.error) {
     throw new Error(`Failed to search campaigns: ${campaignsResult.error.message}`);
@@ -558,6 +623,60 @@ export async function getUniversalSearchData(
         }),
         meta: `${brand.name} | ${humanizeSnakeCase(note.category)} | ${toDateOnly(note.created_at) ?? "Recent"}`,
         badge: "Note",
+      });
+    }
+  }
+
+  for (const prompt of promptRows) {
+    const brand = brandLookup.get(prompt.brand_id);
+
+    if (!brand) {
+      continue;
+    }
+
+    if (
+      [prompt.label, prompt.prompt].some((value) =>
+        includesNormalizedQuery(value, normalizedQuery),
+      )
+    ) {
+      resultsByType.get("prompts")?.push({
+        id: prompt.id,
+        type: "prompts",
+        title: prompt.label,
+        description: truncateText(prompt.prompt, 160),
+        href: buildWorkspaceViewHref(brand.slug, {
+          tab: "prompts",
+          hash: "#prompts",
+        }),
+        meta: `${brand.name} | Prompt | ${toDateOnly(prompt.updated_at) ?? "Recent"}`,
+        badge: "Prompt",
+      });
+    }
+  }
+
+  for (const file of databaseFileRows) {
+    const brand = brandLookup.get(file.brand_id);
+
+    if (!brand) {
+      continue;
+    }
+
+    if (
+      [file.label, file.file_name, file.markdown_content].some((value) =>
+        includesNormalizedQuery(value, normalizedQuery),
+      )
+    ) {
+      resultsByType.get("database")?.push({
+        id: file.id,
+        type: "database",
+        title: file.label,
+        description: truncateText(file.markdown_content, 160),
+        href: buildWorkspaceViewHref(brand.slug, {
+          tab: "database",
+          hash: "#database",
+        }),
+        meta: `${brand.name} | ${file.file_name} | ${toDateOnly(file.updated_at) ?? "Recent"}`,
+        badge: "Database Info",
       });
     }
   }

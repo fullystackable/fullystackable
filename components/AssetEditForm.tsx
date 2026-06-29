@@ -63,7 +63,7 @@ export function AssetEditForm({
   return (
     <form
       action={handleSubmit}
-      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-app-surface p-4"
     >
       <input type="hidden" name="assetId" value={asset.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -215,7 +215,7 @@ export function AssetEditForm({
         />
       </label>
 
-      <label className="flex items-start gap-3 rounded-2xl border border-app-line bg-white/70 px-4 py-3">
+      <label className="flex items-start gap-3 rounded-2xl border border-app-line bg-app-soft/90 px-4 py-3">
         <input
           type="checkbox"
           name="isQuickLink"

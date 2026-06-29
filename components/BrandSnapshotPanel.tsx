@@ -54,6 +54,7 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
         eyebrow="Snapshot"
         title="Brand snapshot"
         description="A quick operating read on the brand's current status, work volume, setup health, and latest movement."
+        compact
         action={
           <div className="flex flex-wrap gap-2">
             <BrandColorBadge color={brand.brandColor} label="Workspace color" />
@@ -62,7 +63,7 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
         }
       />
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
         <MetricTile label="Active campaigns" value={String(activeCampaignsCount)} />
         <MetricTile label="Open tasks" value={String(openTasksCount)} />
         <MetricTile
@@ -72,7 +73,7 @@ export function BrandSnapshotPanel({ brand }: BrandSnapshotPanelProps) {
         />
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      <div className="mt-5 grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
         <InfoTile label="Website">
           {brand.website ? (
             <a
@@ -183,7 +184,7 @@ function MetricTile({
   return (
     <div className="metric-tile">
       <p className="text-xs uppercase tracking-[0.16em] text-ink-muted">{label}</p>
-      <p className={`mt-3 text-3xl font-semibold ${tone ?? "text-ink"}`}>{value}</p>
+      <p className={`mt-2.5 text-2xl font-semibold ${tone ?? "text-ink"}`}>{value}</p>
     </div>
   );
 }
@@ -196,9 +197,9 @@ function InfoTile({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-app-line bg-app-soft px-4 py-4">
+    <div className="rounded-2xl border border-app-line bg-app-soft/90 px-4 py-3.5">
       <p className="text-xs uppercase tracking-[0.16em] text-ink-muted">{label}</p>
-      <div className="mt-3">{children}</div>
+      <div className="mt-2.5">{children}</div>
     </div>
   );
 }

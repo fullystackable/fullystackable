@@ -23,6 +23,8 @@ const sectionToneLabels: Record<SearchResultType, string> = {
   assets: "Assets",
   contacts: "Contacts",
   notes: "Notes",
+  prompts: "Prompts",
+  database: "Database Info",
   campaigns: "Campaigns",
   upcoming: "Upcoming",
   links: "Links",
@@ -34,11 +36,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const hasQuery = data.query.trim().length > 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <DashboardHeader
         eyebrow="Search"
         title="Universal search"
-        subtitle="Search every brand workspace from one place, including records, notes, campaigns, upcoming items, and external links."
+        subtitle="Search every brand workspace from one place, including records, notes, prompts, database info, campaigns, upcoming items, and external links."
         size="compact"
         meta={
           hasQuery ? (
@@ -59,7 +61,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <Card>
         <SectionHeader
           title="Search the workspace"
-          description="Find brands, tasks, assets, contacts, notes, campaigns, upcoming items, and links from one command center."
+          description="Find brands, tasks, assets, contacts, notes, prompts, database info, campaigns, upcoming items, and links from one command center."
           compact
         />
         <div className="mt-5">
@@ -71,7 +73,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <Card className="mt-5">
           <SectionHeader
             title="Search scope"
-            description="Use one query to search every major workspace entity and every saved external link."
+            description="Use one query to search every major workspace entity, every AI support record, and every saved external link."
             compact
           />
           <div className="mt-5 flex flex-wrap gap-2">
@@ -84,7 +86,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <Card className="mt-5">
           <EmptyState
             title="No matches found"
-            description="Try a broader keyword, search by brand name, or search by URL, campaign title, note text, or contact details."
+            description="Try a broader keyword, search by brand name, or search by URL, campaign title, prompt label, markdown text, note text, or contact details."
           />
         </Card>
       ) : (
@@ -140,7 +142,7 @@ function SearchResultRow({ result }: { result: UniversalSearchResult }) {
           {!result.externalHref ? (
             <Link
               href={result.href}
-              className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+              className="app-secondary-button text-xs"
             >
               Open
             </Link>
@@ -148,7 +150,7 @@ function SearchResultRow({ result }: { result: UniversalSearchResult }) {
           {result.workspaceHref ? (
             <Link
               href={result.workspaceHref}
-              className="inline-flex items-center rounded-full border border-app-line px-3 py-1 text-xs font-semibold text-ink-muted hover:bg-app-soft hover:text-ink"
+              className="app-secondary-button text-xs"
             >
               Open workspace
             </Link>

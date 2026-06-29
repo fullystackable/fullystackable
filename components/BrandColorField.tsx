@@ -63,8 +63,8 @@ export function BrandColorField({
               onClick={() => setSelectedColor(option.value)}
               className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                 isSelected
-                  ? "border-app-line-strong bg-white text-ink shadow-app-soft"
-                  : "border-app-line bg-white/80 text-ink-muted hover:bg-app-soft hover:text-ink"
+                  ? "border-app-line-strong bg-app-surface text-ink shadow-app-soft"
+                  : "border-app-line bg-app-soft/90 text-ink-muted hover:bg-app-soft hover:text-ink"
               }`}
             >
               <span

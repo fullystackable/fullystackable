@@ -32,7 +32,7 @@ export function QuickLinksList({
           href={link.url}
           target="_blank"
           rel="noreferrer"
-          className="block rounded-2xl border border-app-line bg-white px-4 py-3 hover:border-app-line-strong hover:bg-app-surface"
+          className="block rounded-2xl border border-app-line bg-app-surface px-4 py-3 hover:border-app-line-strong hover:bg-app-surface-muted"
         >
           <p className="text-sm font-semibold text-ink">{link.title}</p>
           <p className="mt-1 text-sm text-ink-muted">

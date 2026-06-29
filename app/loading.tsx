@@ -2,7 +2,7 @@ import { Card } from "@/components/ui";
 
 export default function Loading() {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <header className="mb-6 border-b border-app-line pb-6">
         <div className="h-5 w-28 rounded-full bg-app-soft" />
         <div className="mt-4 h-10 w-full max-w-xl rounded-2xl bg-app-soft" />

@@ -17,7 +17,7 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
   const todayLabel = formatWeekdayDate(data.todayLabel);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <DashboardHeader
         eyebrow="Today"
         title="Daily planner"
@@ -34,13 +34,13 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/dashboard"
-              className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+              className="app-secondary-button"
             >
               Open dashboard
             </Link>
             <Link
               href="/calendar"
-              className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+              className="app-primary-button"
             >
               Open calendar
             </Link>
@@ -48,10 +48,10 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Card className="h-full">
           <p className="text-sm font-medium text-ink-muted">Overdue</p>
-          <p className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-[2.4rem]">
             {data.overdueCount}
           </p>
           <p className="mt-2 text-sm leading-6 text-ink-muted">
@@ -60,7 +60,7 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
         </Card>
         <Card className="h-full">
           <p className="text-sm font-medium text-ink-muted">Due today</p>
-          <p className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-[2.4rem]">
             {data.dueTodayCount}
           </p>
           <p className="mt-2 text-sm leading-6 text-ink-muted">
@@ -69,7 +69,7 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
         </Card>
         <Card className="h-full">
           <p className="text-sm font-medium text-ink-muted">Next 3 days</p>
-          <p className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-[2.4rem]">
             {data.nextThreeDaysCount}
           </p>
           <p className="mt-2 text-sm leading-6 text-ink-muted">
@@ -78,7 +78,7 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
         </Card>
         <Card className="h-full">
           <p className="text-sm font-medium text-ink-muted">Upcoming soon</p>
-          <p className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-[2.4rem]">
             {data.upcomingSoonCount}
           </p>
           <p className="mt-2 text-sm leading-6 text-ink-muted">
@@ -87,21 +87,22 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
         </Card>
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <Card id="agenda">
           <SectionHeader
             eyebrow="Action"
             title="Action agenda"
             description="Tasks and upcoming items grouped by when they matter, so the next few days are easy to work through in order."
+            compact
             action={<Badge>{data.groups.reduce((sum, group) => sum + group.entries.length, 0)} items</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.groups.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {data.groups.map((group) => (
                   <section
                     key={group.id}
-                    className="rounded-3xl border border-app-line bg-app-soft/55 p-4"
+                    className="rounded-[1.2rem] border border-app-line bg-app-soft/90 p-3.5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -114,7 +115,7 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
                         {group.date ? getRelativeDateLabel(group.date) : "Priority first"}
                       </Badge>
                     </div>
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-3 space-y-3">
                       {group.entries.map((entry) => (
                         <DailyPlannerEntryRow key={`${entry.kind}-${entry.id}`} entry={entry} />
                       ))}
@@ -136,9 +137,10 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
             eyebrow="Pinned"
             title="Pinned brands"
             description="Keep quick-access brands close while you work the day."
+            compact
             action={<Badge>{data.pinnedBrands.length}</Badge>}
           />
-          <div className="mt-6">
+          <div className="mt-4">
             {data.pinnedBrands.length > 0 ? (
               <div className="data-list">
                 {data.pinnedBrands.map((brand) => (
@@ -165,14 +167,14 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
                       </div>
                       <Link
                         href={`/brands/${brand.slug}`}
-                        className="inline-flex items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+                        className="app-secondary-button"
                       >
                         Open
                       </Link>
                     </div>
                     <div className="mt-4">
                       {brand.spotlightNote ? (
-                        <div className="mb-4 rounded-2xl border border-app-line bg-app-soft/55 px-3 py-3">
+                        <div className="mb-4 rounded-2xl border border-app-line bg-app-soft/90 px-3 py-3">
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge tone="accent">Pinned note</Badge>
                             <Badge>{brand.spotlightNote.category}</Badge>
@@ -212,7 +214,7 @@ export function DailyPlanner({ data }: DailyPlannerProps) {
 
 function DailyPlannerEntryRow({ entry }: { entry: DailyPlannerEntry }) {
   return (
-    <article className="rounded-2xl border border-app-line bg-white px-4 py-3">
+    <article className="rounded-2xl border border-app-line bg-app-surface px-4 py-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Link href={entry.href} className="text-base font-semibold text-ink hover:text-accent">

@@ -23,7 +23,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const view = normalizeUpcomingPlannerView(resolvedSearchParams.view);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <DashboardHeader
         eyebrow="Calendar"
         title="Upcoming planner"

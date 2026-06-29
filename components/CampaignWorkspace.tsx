@@ -49,12 +49,13 @@ export function CampaignWorkspace({
   }));
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-4">
       <Card>
         <SectionHeader
           eyebrow="Campaign"
           title="Campaign snapshot"
           description="A compact workspace for the brief, execution layer, deadlines, and final learnings around one campaign."
+          compact
           action={
             <div className="flex flex-wrap gap-2">
               <BrandColorBadge color={campaign.brandColor} label={campaign.brandName} />
@@ -65,7 +66,7 @@ export function CampaignWorkspace({
           }
         />
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <MetricTile label="Status" value={campaign.status} />
           <MetricTile label="Launch date" value={launchDateLabel} />
           <MetricTile label="Open tasks" value={String(openTasksCount)} />
@@ -82,7 +83,7 @@ export function CampaignWorkspace({
       </Card>
 
       <nav aria-label="Campaign sections" className="overflow-x-auto pb-1">
-        <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-app-line bg-white/80 p-2 sm:min-w-max sm:flex-nowrap">
+        <div className="app-tab-strip w-full sm:min-w-max sm:flex-nowrap">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
 
@@ -92,12 +93,11 @@ export function CampaignWorkspace({
                 href={buildCampaignWorkspaceHref(campaign.brandSlug, campaign.id, {
                   tab: tab.id,
                 })}
+                scroll={false}
                 className={cx(
-                  "inline-flex items-center rounded-xl px-3 py-2 text-sm font-medium",
-                  isActive
-                    ? "bg-app-sidebar text-white shadow-app-soft"
-                    : "text-ink-muted hover:bg-app-soft hover:text-ink",
+                  "app-tab-link",
                 )}
+                data-active={isActive}
                 aria-current={isActive ? "page" : undefined}
               >
                 {tab.label}
@@ -114,7 +114,7 @@ export function CampaignWorkspace({
             description="Keep the core brief, ideas, links, notes, and post-campaign learnings in one place."
             compact
           />
-          <div className="mt-5 space-y-5">
+          <div className="mt-4 space-y-4">
             <ExpandablePanel
               title="Edit campaign details"
               description="Update the brief, launch date, content ideas, links, and post-campaign notes without leaving this workspace."
@@ -128,7 +128,7 @@ export function CampaignWorkspace({
               />
             </ExpandablePanel>
 
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
               <OverviewField
                 label="Campaign brief"
                 value={campaign.description}
@@ -158,7 +158,7 @@ export function CampaignWorkspace({
                 value={campaign.resultsNotes}
                 empty="No wrap-up notes yet."
                 preserveLines
-                className="xl:col-span-2"
+                className="xl:col-span-2 2xl:col-span-3"
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ export function CampaignWorkspace({
             action={<Badge>{campaign.tasks.length}</Badge>}
             compact
           />
-          <div className="mt-5 space-y-5">
+          <div className="mt-4 space-y-4">
             <ExpandablePanel
               title="Add a task"
               description="Capture new work without breaking campaign context."
@@ -205,7 +205,7 @@ export function CampaignWorkspace({
             action={<Badge>{campaign.assets.length}</Badge>}
             compact
           />
-          <div className="mt-5 space-y-5">
+          <div className="mt-4 space-y-4">
             <ExpandablePanel
               title="Add an asset"
               description="Keep campaign files and working references attached to the initiative."
@@ -238,7 +238,7 @@ export function CampaignWorkspace({
             action={<Badge>{campaign.upcoming.length}</Badge>}
             compact
           />
-          <div className="mt-5 space-y-5">
+          <div className="mt-4 space-y-4">
             <ExpandablePanel
               title="Add a deadline or scheduled item"
               description="Keep launch timing and milestone visibility attached to the campaign."
@@ -270,7 +270,7 @@ function MetricTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="metric-tile">
       <p className="text-xs uppercase tracking-[0.16em] text-ink-muted">{label}</p>
-      <p className="mt-3 text-2xl font-semibold text-ink">{value}</p>
+      <p className="mt-2.5 text-xl font-semibold text-ink">{value}</p>
     </div>
   );
 }
@@ -297,11 +297,11 @@ function OverviewField({
   const normalizedValue = value?.trim() ?? "";
 
   return (
-    <article className={cx("rounded-2xl border border-app-line bg-app-soft px-4 py-4", className)}>
+    <article className={cx("rounded-2xl border border-app-line bg-app-soft/90 px-4 py-3.5", className)}>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
         {label}
       </p>
-      <div className="mt-3">
+      <div className="mt-2.5">
         {normalizedValue ? (
           asLinks ? (
             <div className="space-y-2">

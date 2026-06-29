@@ -1,6 +1,7 @@
 import "server-only";
 
 import { buildBrandReadiness } from "@/lib/brand-readiness";
+import { isMissingBrandWorkspaceSupportTableError } from "@/lib/supabase-schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   buildStatusSummary,
@@ -169,6 +170,23 @@ type NoteRow = {
   created_at: string;
 };
 
+type PromptRow = {
+  id: string;
+  brand_id: string;
+  label: string;
+  prompt: string;
+  updated_at: string;
+};
+
+type DatabaseFileRow = {
+  id: string;
+  brand_id: string;
+  label: string;
+  file_name: string;
+  markdown_content: string;
+  updated_at: string;
+};
+
 type ContactSearchRow = Pick<ContactRow, "brand_id" | "name" | "email">;
 
 type CampaignSearchRow = Pick<CampaignRow, "brand_id" | "title">;
@@ -176,6 +194,11 @@ type CampaignSearchRow = Pick<CampaignRow, "brand_id" | "title">;
 type AssetSearchRow = Pick<AssetRow, "brand_id" | "title" | "url">;
 
 type NoteSearchRow = Pick<NoteRow, "brand_id" | "body">;
+type PromptSearchRow = Pick<PromptRow, "brand_id" | "label" | "prompt">;
+type DatabaseFileSearchRow = Pick<
+  DatabaseFileRow,
+  "brand_id" | "label" | "file_name" | "markdown_content"
+>;
 
 function normalizeBrandDirectoryStatusFilter(
   value: string | null | undefined,
@@ -248,6 +271,24 @@ function addSearchMatchReason(
   }
 }
 
+function getOptionalBrandWorkspaceRows<Row extends object>(
+  result: {
+    data: Row[] | null;
+    error: { code?: string | null; message: string } | null;
+  },
+  errorMessage: string,
+) {
+  if (result.error) {
+    if (isMissingBrandWorkspaceSupportTableError(result.error)) {
+      return [] as Row[];
+    }
+
+    throw new Error(`${errorMessage}: ${result.error.message}`);
+  }
+
+  return (result.data ?? []) as Row[];
+}
+
 async function getRelatedBrandSearchMatches(
   brandIds: string[],
   normalizedQuery: string,
@@ -257,7 +298,14 @@ async function getRelatedBrandSearchMatches(
   }
 
   const supabase = createSupabaseServerClient();
-  const [contactsResult, campaignsResult, assetsResult, notesResult] =
+  const [
+    contactsResult,
+    campaignsResult,
+    assetsResult,
+    notesResult,
+    promptsResult,
+    databaseFilesResult,
+  ] =
     await Promise.all([
       supabase
         .from("contacts")
@@ -266,6 +314,11 @@ async function getRelatedBrandSearchMatches(
       supabase.from("campaigns").select("brand_id, title").in("brand_id", brandIds),
       supabase.from("assets").select("brand_id, title, url").in("brand_id", brandIds),
       supabase.from("notes").select("brand_id, body").in("brand_id", brandIds),
+      supabase.from("brand_prompts").select("brand_id, label, prompt").in("brand_id", brandIds),
+      supabase
+        .from("brand_database_files")
+        .select("brand_id, label, file_name, markdown_content")
+        .in("brand_id", brandIds),
     ]);
 
   if (contactsResult.error) {
@@ -283,6 +336,21 @@ async function getRelatedBrandSearchMatches(
   if (notesResult.error) {
     throw new Error(`Failed to search notes: ${notesResult.error.message}`);
   }
+
+  const promptRows = getOptionalBrandWorkspaceRows<PromptSearchRow>(
+    {
+      data: (promptsResult.data ?? []) as PromptSearchRow[],
+      error: promptsResult.error,
+    },
+    "Failed to search prompts",
+  );
+  const databaseFileRows = getOptionalBrandWorkspaceRows<DatabaseFileSearchRow>(
+    {
+      data: (databaseFilesResult.data ?? []) as DatabaseFileSearchRow[],
+      error: databaseFilesResult.error,
+    },
+    "Failed to search database info",
+  );
 
   const matchReasons = new Map<string, string>();
 
@@ -313,6 +381,25 @@ async function getRelatedBrandSearchMatches(
   for (const note of (notesResult.data ?? []) as NoteSearchRow[]) {
     if (includesNormalizedQuery(note.body, normalizedQuery)) {
       addSearchMatchReason(matchReasons, note.brand_id, "Matched note");
+    }
+  }
+
+  for (const prompt of promptRows) {
+    if (
+      includesNormalizedQuery(prompt.label, normalizedQuery) ||
+      includesNormalizedQuery(prompt.prompt, normalizedQuery)
+    ) {
+      addSearchMatchReason(matchReasons, prompt.brand_id, "Matched prompt");
+    }
+  }
+
+  for (const file of databaseFileRows) {
+    if (
+      includesNormalizedQuery(file.label, normalizedQuery) ||
+      includesNormalizedQuery(file.file_name, normalizedQuery) ||
+      includesNormalizedQuery(file.markdown_content, normalizedQuery)
+    ) {
+      addSearchMatchReason(matchReasons, file.brand_id, "Matched database info");
     }
   }
 
@@ -635,6 +722,8 @@ export async function getBrandWorkspaceBySlug(slug: string) {
     campaignsResult,
     upcomingResult,
     notesResult,
+    promptsResult,
+    databaseFilesResult,
   ] =
     await Promise.all([
       supabase
@@ -672,6 +761,16 @@ export async function getBrandWorkspaceBySlug(slug: string) {
         .eq("brand_id", brand.id)
         .order("pinned", { ascending: false })
         .order("created_at", { ascending: false }),
+      supabase
+        .from("brand_prompts")
+        .select("id, brand_id, label, prompt, updated_at")
+        .eq("brand_id", brand.id)
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("brand_database_files")
+        .select("id, brand_id, label, file_name, markdown_content, updated_at")
+        .eq("brand_id", brand.id)
+        .order("updated_at", { ascending: false }),
     ]);
 
   if (tasksResult.error) {
@@ -697,6 +796,21 @@ export async function getBrandWorkspaceBySlug(slug: string) {
   if (notesResult.error) {
     throw new Error(`Failed to load notes: ${notesResult.error.message}`);
   }
+
+  const promptRows = getOptionalBrandWorkspaceRows<PromptRow>(
+    {
+      data: (promptsResult.data ?? []) as PromptRow[],
+      error: promptsResult.error,
+    },
+    "Failed to load prompts",
+  );
+  const databaseFileRows = getOptionalBrandWorkspaceRows<DatabaseFileRow>(
+    {
+      data: (databaseFilesResult.data ?? []) as DatabaseFileRow[],
+      error: databaseFilesResult.error,
+    },
+    "Failed to load database info",
+  );
 
   const campaignTitles = new Map(
     ((campaignsResult.data ?? []) as CampaignRow[]).map((campaign) => [
@@ -839,6 +953,19 @@ export async function getBrandWorkspaceBySlug(slug: string) {
       category: humanizeSnakeCase(note.category),
       categoryValue: note.category,
       pinned: note.pinned,
+    })),
+    prompts: promptRows.map((prompt) => ({
+      id: prompt.id,
+      label: prompt.label,
+      prompt: prompt.prompt,
+      updatedAt: toISODateOnly(prompt.updated_at) ?? prompt.updated_at,
+    })),
+    databaseFiles: databaseFileRows.map((file) => ({
+      id: file.id,
+      label: file.label,
+      fileName: file.file_name,
+      content: file.markdown_content,
+      updatedAt: toISODateOnly(file.updated_at) ?? file.updated_at,
     })),
   } satisfies BrandWorkspaceData;
 }

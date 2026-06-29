@@ -67,7 +67,7 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
   return (
     <form
       action={handleSubmit}
-      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-app-surface p-4"
     >
       <input type="hidden" name="noteId" value={note.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -95,7 +95,7 @@ export function NoteEditForm({ note, brandSlug }: NoteEditFormProps) {
           </select>
         </label>
 
-        <label className="flex items-center gap-3 rounded-2xl border border-app-line bg-white/80 px-4 py-3 text-sm text-ink">
+        <label className="flex items-center gap-3 rounded-2xl border border-app-line bg-app-soft/90 px-4 py-3 text-sm text-ink">
           <input
             type="checkbox"
             name="pinned"

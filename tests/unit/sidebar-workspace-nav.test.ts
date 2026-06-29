@@ -49,6 +49,8 @@ describe("sidebar workspace navigation", () => {
       { label: "Assets", href: "/dashboard#assets", tab: "assets" },
       { label: "Contacts", href: "/search", tab: "contacts" },
       { label: "Notes", href: "/dashboard#notes", tab: "notes" },
+      { label: "Prompts", href: "/brands", tab: "prompts" },
+      { label: "Database Info", href: "/brands", tab: "database" },
     ]);
   });
 });

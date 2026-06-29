@@ -66,7 +66,7 @@ export function UpcomingEditForm({
   return (
     <form
       action={handleSubmit}
-      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-app-surface p-4"
     >
       <input type="hidden" name="upcomingItemId" value={item.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />

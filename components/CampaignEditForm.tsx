@@ -72,7 +72,7 @@ export function CampaignEditForm({
       className={cx(
         "order-last w-full basis-full space-y-4",
         alwaysExpanded ? "" : "mt-4",
-        framed ? "rounded-2xl border border-app-line bg-white/90 p-4" : "",
+        framed ? "rounded-2xl border border-app-line bg-app-surface p-4" : "",
       )}
     >
       <input type="hidden" name="campaignId" value={campaign.id} />

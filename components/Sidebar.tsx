@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { Badge, cx } from "@/components/ui";
+import { cx } from "@/components/ui";
 import {
   getSidebarWorkspaceNav,
   isBrandWorkspacePath,
@@ -61,28 +62,26 @@ export function Sidebar() {
   );
 
   return (
-    <aside className="w-full shrink-0 border-b border-app-sidebar-line bg-app-sidebar text-white lg:sticky lg:top-0 lg:h-screen lg:w-[260px] lg:border-b-0 lg:border-r lg:border-app-sidebar-line">
-      <div className="px-4 py-4 sm:px-5 lg:flex lg:h-full lg:flex-col lg:px-6 lg:py-5">
-        <div className="flex items-start justify-between gap-3 border-b border-app-sidebar-line pb-4 lg:pb-5">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-lg font-semibold text-frost">
-                F
-              </span>
-              <div>
-                <p className="text-base font-semibold tracking-tight text-white">
-                  fullystackable
-                </p>
-                <p className="mt-1 text-sm text-white/60">
-                  Brand command center
-                </p>
-              </div>
+    <aside className="w-full shrink-0 border-b border-app-sidebar-line bg-app-sidebar text-white lg:sticky lg:top-0 lg:h-screen lg:w-[244px] lg:border-b-0 lg:border-r lg:border-app-sidebar-line">
+      <div className="px-4 py-4 sm:px-5 lg:flex lg:h-full lg:flex-col lg:overflow-y-auto lg:px-4 lg:py-5">
+        <div className="border-b border-app-sidebar-line pb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative h-10 w-10 shrink-0">
+              <Image
+                src="/brand/logos/fully-stackble-stack-logo.png"
+                alt="Fullystackable logo"
+                fill
+                sizes="40px"
+                className="object-contain"
+              />
             </div>
+            <p className="text-[0.95rem] font-semibold tracking-tight text-white">
+              fullystackable
+            </p>
           </div>
-          <Badge tone="sidebar">MVP</Badge>
         </div>
 
-        <nav className="mt-4 overflow-x-auto pb-1 lg:mt-6 lg:overflow-visible lg:pb-0">
+        <nav className="mt-4 overflow-x-auto pb-1 lg:mt-5 lg:overflow-visible lg:pb-0">
           <div className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col">
             {primaryNav.map((item) => {
               const isActive = item.match?.(pathname) ?? pathname === item.href;
@@ -105,14 +104,9 @@ export function Sidebar() {
           </div>
         </nav>
 
-        <div className={cx("mt-5 lg:mt-8", isBrandWorkspace ? "" : "hidden lg:block")}>
+        <div className={cx("mt-5 lg:mt-7", isBrandWorkspace ? "" : "hidden lg:block")}>
           <p className="px-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/40">
             Workspace
-          </p>
-          <p className="mt-2 px-1 text-sm text-white/60">
-            {isBrandWorkspace
-              ? "Jump around this brand workspace."
-              : "Quick links into the main operating views."}
           </p>
           <nav className="mt-3 overflow-x-auto pb-1 lg:overflow-visible lg:pb-0">
             <div className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col">
@@ -125,8 +119,9 @@ export function Sidebar() {
                   <Link
                     key={item.label}
                     href={item.href}
+                    scroll={isBrandWorkspace ? false : undefined}
                     aria-label={`Jump to ${item.label} section`}
-                    className={cx("sidebar-link", "py-3 text-sm whitespace-nowrap")}
+                    className={cx("sidebar-link", "py-2.5 text-sm whitespace-nowrap")}
                     data-active={isActive}
                   >
                     <span>{item.label}</span>
@@ -135,21 +130,6 @@ export function Sidebar() {
               })}
             </div>
           </nav>
-        </div>
-
-        <div className="mt-auto hidden pt-8 lg:block">
-          <div className="rounded-3xl border border-app-sidebar-line bg-app-sidebar-muted px-4 py-4">
-            <p className="text-sm font-semibold text-white">Personal command center</p>
-            <p className="mt-2 text-sm leading-6 text-white/60">
-              Keep your most important brands, tasks, assets, and deadlines close
-              without turning the MVP into a heavier system.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Badge tone="sidebar">Pinned brands</Badge>
-              <Badge tone="sidebar">Tasks</Badge>
-              <Badge tone="sidebar">Quick links</Badge>
-            </div>
-          </div>
         </div>
       </div>
     </aside>
@@ -162,6 +142,8 @@ function normalizeWorkspaceTab(value: string | null): WorkspaceTab {
     case "assets":
     case "contacts":
     case "notes":
+    case "prompts":
+    case "database":
     case "profile":
       return value;
     case "tasks":

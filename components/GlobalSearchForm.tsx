@@ -13,8 +13,8 @@ export function GlobalSearchForm({ compact = false }: GlobalSearchFormProps) {
   const currentQuery = pathname === "/search" ? (searchParams.get("q") ?? "") : "";
   const hasQuery = currentQuery.trim().length > 0;
   const placeholder = compact
-    ? "Search brands, tasks, assets, contacts, notes, campaigns, upcoming, or links"
-    : "Search brands, tasks, assets, contacts, notes, campaigns, upcoming, links";
+    ? "Search brands, tasks, assets, contacts, notes, prompts, database info, campaigns, upcoming, or links"
+    : "Search brands, tasks, assets, contacts, notes, prompts, database info, campaigns, upcoming, links";
 
   return (
     <form action="/search" className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
@@ -32,14 +32,14 @@ export function GlobalSearchForm({ compact = false }: GlobalSearchFormProps) {
       />
       <button
         type="submit"
-        className="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-full bg-app-sidebar px-4 text-sm font-medium text-white hover:bg-app-sidebar-muted sm:w-auto"
+        className="app-primary-button h-11 w-full shrink-0 sm:w-auto"
       >
         Search
       </button>
       {pathname === "/search" && hasQuery ? (
         <Link
           href="/search"
-          className="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-full border border-app-line px-4 text-sm font-medium text-ink hover:bg-app-soft sm:w-auto"
+          className="app-secondary-button h-11 w-full shrink-0 sm:w-auto"
         >
           Clear
         </Link>

@@ -1,5 +1,7 @@
 "use client";
 
+import "client-only";
+
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { getSupabasePublicConfig } from "@/lib/supabase/config";

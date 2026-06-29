@@ -11,7 +11,7 @@ export default async function ActivityPage() {
   const activity = await getRecentActivityFeed(50);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <DashboardHeader
         eyebrow="Activity"
         title="Recent activity"
@@ -21,7 +21,7 @@ export default async function ActivityPage() {
         action={
           <Link
             href="/dashboard"
-            className="inline-flex items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+            className="app-secondary-button"
           >
             Back to dashboard
           </Link>

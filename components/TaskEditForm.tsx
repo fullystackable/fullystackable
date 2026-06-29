@@ -33,7 +33,7 @@ export function TaskEditForm({
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="inline-flex min-h-11 items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+          className="app-secondary-button"
         >
           Edit
         </button>
@@ -62,7 +62,7 @@ export function TaskEditForm({
   return (
     <form
       action={handleSubmit}
-      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-white/90 p-4"
+      className="order-last mt-4 w-full basis-full space-y-4 rounded-2xl border border-app-line bg-app-surface p-4"
     >
       <input type="hidden" name="taskId" value={task.id} />
       <input type="hidden" name="brandSlug" value={brandSlug} />
@@ -137,7 +137,7 @@ export function TaskEditForm({
         <button
           type="button"
           onClick={() => setIsEditing(false)}
-          className="inline-flex min-h-11 items-center rounded-full border border-app-line px-3 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+          className="app-secondary-button"
         >
           Cancel
         </button>

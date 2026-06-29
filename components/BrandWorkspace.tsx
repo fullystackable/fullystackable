@@ -9,9 +9,13 @@ import { CampaignCreateForm } from "@/components/CampaignCreateForm";
 import { CampaignList } from "@/components/CampaignList";
 import { ContactCreateForm } from "@/components/ContactCreateForm";
 import { ContactList } from "@/components/ContactList";
+import { DatabaseInfoCreateForm } from "@/components/DatabaseInfoCreateForm";
+import { DatabaseInfoList } from "@/components/DatabaseInfoList";
 import { ExpandablePanel } from "@/components/ExpandablePanel";
 import { NoteCreateForm } from "@/components/NoteCreateForm";
 import { NotesPanel } from "@/components/NotesPanel";
+import { PromptCreateForm } from "@/components/PromptCreateForm";
+import { PromptList } from "@/components/PromptList";
 import { TaskCreateForm } from "@/components/TaskCreateForm";
 import { TaskList } from "@/components/TaskList";
 import { UpcomingCreateForm } from "@/components/UpcomingCreateForm";
@@ -153,8 +157,8 @@ export function BrandWorkspace({
     upcomingSort !== "date_asc";
   const hasCustomSettings =
     hasCustomSorts || density !== "comfortable" || taskView !== "all";
-  const sectionGridClass = isCompact ? "grid gap-4 xl:grid-cols-2" : "grid gap-5 xl:grid-cols-2";
-  const stackClass = isCompact ? "space-y-4" : "space-y-5";
+  const sectionGridClass = isCompact ? "grid gap-4 xl:grid-cols-2" : "grid gap-4 xl:grid-cols-2";
+  const stackClass = isCompact ? "space-y-3.5" : "space-y-4";
   const taskSectionDescription = activeCampaign
     ? `Campaign execution, approvals, and production milestones tied to ${activeCampaign.title}.`
     : "Campaign execution, approvals, and production milestones.";
@@ -200,13 +204,15 @@ export function BrandWorkspace({
     { id: "assets", label: "Assets", count: visibleAssets.length },
     { id: "contacts", label: "Contacts", count: brand.contacts.length },
     { id: "notes", label: "Notes", count: brand.notes.length },
+    { id: "prompts", label: "Prompts", count: brand.prompts.length },
+    { id: "database", label: "Database Info", count: brand.databaseFiles.length },
     { id: "profile", label: "Profile" },
   ];
 
   return (
     <section
       className={cx(
-        isCompact ? "workspace-density-compact space-y-4" : "space-y-5",
+        isCompact ? "workspace-density-compact space-y-4" : "space-y-4",
       )}
     >
       <BrandSnapshotPanel brand={brand} />
@@ -247,7 +253,7 @@ export function BrandWorkspace({
       />
 
       <nav aria-label="Workspace sections" className="overflow-x-auto pb-1">
-        <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-app-line bg-white/80 p-2 sm:min-w-max sm:flex-nowrap">
+        <div className="app-tab-strip w-full sm:min-w-max sm:flex-nowrap">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
 
@@ -263,12 +269,11 @@ export function BrandWorkspace({
                   density,
                   tab: tab.id,
                 })}
+                scroll={false}
                 className={cx(
-                  "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
-                  isActive
-                    ? "bg-app-sidebar text-white shadow-app-soft"
-                    : "text-ink-muted hover:bg-app-soft hover:text-ink",
+                  "app-tab-link",
                 )}
+                data-active={isActive}
                 aria-current={isActive ? "page" : undefined}
               >
                 <span>{tab.label}</span>
@@ -276,7 +281,7 @@ export function BrandWorkspace({
                   <span
                     className={cx(
                       "rounded-full px-2 py-0.5 text-xs font-semibold",
-                      isActive ? "bg-white/14 text-white" : "bg-app-soft text-ink",
+                      isActive ? "bg-white/10 text-white" : "bg-app-soft text-ink",
                     )}
                   >
                     {tab.count}
@@ -464,6 +469,56 @@ export function BrandWorkspace({
         />
       ) : null}
 
+      {activeTab === "prompts" ? (
+        <WorkspaceSection
+          id="prompts"
+          title="Prompts"
+          description="Labeled prompts you reuse with your AI tools for this brand."
+          action={<Badge>{brand.prompts.length} saved</Badge>}
+        >
+          <div className={stackClass}>
+            <ExpandablePanel
+              title="Add a prompt"
+              description="Store repeatable AI instructions with a clean label so they are easy to grab later."
+              buttonLabel="New prompt"
+              alwaysVisible
+            >
+              <PromptCreateForm brandId={brand.id} brandSlug={brand.slug} />
+            </ExpandablePanel>
+            <PromptList
+              prompts={brand.prompts}
+              brandSlug={brand.slug}
+              allowDelete
+            />
+          </div>
+        </WorkspaceSection>
+      ) : null}
+
+      {activeTab === "database" ? (
+        <WorkspaceSection
+          id="database"
+          title="Database info"
+          description="Markdown source files and regularly updated context for your AI workflows."
+          action={<Badge>{brand.databaseFiles.length} saved</Badge>}
+        >
+          <div className={stackClass}>
+            <ExpandablePanel
+              title="Add database info"
+              description="Drop in a markdown file or paste source notes directly into the workspace."
+              buttonLabel="New database entry"
+              alwaysVisible
+            >
+              <DatabaseInfoCreateForm brandId={brand.id} brandSlug={brand.slug} />
+            </ExpandablePanel>
+            <DatabaseInfoList
+              files={brand.databaseFiles}
+              brandSlug={brand.slug}
+              allowDelete
+            />
+          </div>
+        </WorkspaceSection>
+      ) : null}
+
       {activeTab === "profile" ? <BrandProfilePanel brand={brand} /> : null}
     </section>
   );
@@ -492,7 +547,7 @@ function WorkspaceSection({
         action={action}
         compact
       />
-      <div className="mt-5">{children}</div>
+      <div className="mt-4">{children}</div>
     </Card>
   );
 }

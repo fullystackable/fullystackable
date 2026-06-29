@@ -67,7 +67,7 @@ export default async function CampaignPage({
   const activeTab = normalizeCampaignTab(resolvedSearchParams.tab);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col">
+    <div className="app-page-shell flex w-full flex-col">
       <DashboardHeader
         eyebrow="Campaign"
         title={campaign.title}
@@ -90,7 +90,7 @@ export default async function CampaignPage({
               activeCampaignId: campaign.id,
               hash: "#campaigns",
             })}
-            className="inline-flex items-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            className="app-primary-button"
           >
             Back to brand workspace
           </Link>

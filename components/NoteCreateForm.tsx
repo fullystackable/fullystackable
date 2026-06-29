@@ -64,7 +64,7 @@ export function NoteCreateForm({ brandId, brandSlug }: NoteCreateFormProps) {
           </select>
         </label>
 
-        <label className="flex items-center gap-3 rounded-2xl border border-app-line bg-white/80 px-4 py-3 text-sm text-ink">
+        <label className="flex items-center gap-3 rounded-2xl border border-app-line bg-app-soft/90 px-4 py-3 text-sm text-ink">
           <input type="checkbox" name="pinned" className="h-4 w-4 accent-[var(--app-accent)]" />
           Pin this note near the top
         </label>

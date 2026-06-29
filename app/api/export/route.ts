@@ -1,6 +1,16 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  getExportProtectionStatus,
+  isAuthorizedExportRequest,
+} from "@/lib/export-auth";
 
 export const dynamic = "force-dynamic";
+
+const protectedResponseHeaders = {
+  "Cache-Control": "private, no-store, max-age=0",
+  "X-Robots-Tag": "noindex, nofollow",
+  Vary: "Authorization",
+};
 
 async function loadTable(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
@@ -19,7 +29,32 @@ async function loadTable(
   return data ?? [];
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const exportProtection = getExportProtectionStatus();
+
+  if (exportProtection.mode !== "configured") {
+    return new Response(exportProtection.message, {
+      status: 503,
+      headers: protectedResponseHeaders,
+    });
+  }
+
+  if (
+    !isAuthorizedExportRequest(
+      request.headers.get("authorization"),
+      exportProtection.username,
+      exportProtection.password,
+    )
+  ) {
+    return new Response("Backup credentials required.", {
+      status: 401,
+      headers: {
+        ...protectedResponseHeaders,
+        "WWW-Authenticate": 'Basic realm="fullystackable backup", charset="UTF-8"',
+      },
+    });
+  }
+
   const exportedAt = new Date().toISOString();
   const supabase = createSupabaseAdminClient();
   const [
@@ -65,6 +100,7 @@ export async function GET() {
 
   return new Response(body, {
     headers: {
+      ...protectedResponseHeaders,
       "Content-Type": "application/json; charset=utf-8",
       "Content-Disposition": `attachment; filename="fullystackable-export-${fileDate}.json"`,
     },

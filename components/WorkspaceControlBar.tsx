@@ -52,19 +52,17 @@ export function WorkspaceControlBar({
   hasInvalidCampaignFocus,
 }: WorkspaceControlBarProps) {
   return (
-    <section className="app-card p-4 sm:p-5">
-      <div className="flex flex-col gap-4 border-b border-app-line pb-4 lg:flex-row lg:items-end lg:justify-between">
+    <section className="app-card p-4">
+      <div className="flex flex-col gap-3 border-b border-app-line pb-3.5 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
             Workspace view
           </p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+          <h2 className="mt-2 text-lg font-semibold tracking-tight text-ink sm:text-[1.35rem]">
             Focus and sorting
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-ink-muted">
-            Keep the workspace focused without opening a stack of extra panels.
-            Your current view lives in the URL, so refreshes and deep links stay
-            stable.
+            Filter the workspace without leaving the page. The current view stays encoded in the URL so refreshes and shared links stay stable.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -82,7 +80,7 @@ export function WorkspaceControlBar({
 
       <form
         action={`/brands/${brandSlug}`}
-        className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6"
       >
         {activeTab !== "tasks" ? <input type="hidden" name="tab" value={activeTab} /> : null}
 
@@ -144,10 +142,10 @@ export function WorkspaceControlBar({
           </select>
         </label>
 
-        <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-3">
+        <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:flex-wrap sm:items-end xl:col-span-3 2xl:col-span-6">
           <button
             type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-app-sidebar px-4 py-2 text-sm font-medium text-white hover:bg-app-sidebar-muted"
+            className="app-primary-button"
           >
             Apply view
           </button>
@@ -162,7 +160,8 @@ export function WorkspaceControlBar({
                 density,
                 activeTab,
               )}
-              className="inline-flex min-h-11 items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+              scroll={false}
+              className="app-secondary-button"
             >
               Clear focus
             </Link>
@@ -170,7 +169,8 @@ export function WorkspaceControlBar({
           {hasCustomSettings ? (
             <Link
               href={buildWorkspaceResetHref(brandSlug, activeCampaignId, activeTab)}
-              className="inline-flex min-h-11 items-center rounded-full border border-app-line px-4 py-2 text-sm font-medium text-ink hover:bg-app-soft"
+              scroll={false}
+              className="app-secondary-button"
             >
               Reset
             </Link>
